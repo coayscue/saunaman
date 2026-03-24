@@ -51,6 +51,7 @@ function AdminDashboard() {
     try {
       await api.post('/events', {
         ...newEvent,
+        date: new Date(newEvent.date).toISOString(),
         price: parseFloat(newEvent.price),
         max_capacity: parseInt(newEvent.max_capacity),
         duration: parseInt(newEvent.duration)
@@ -95,6 +96,7 @@ function AdminDashboard() {
     try {
       const updated = await api.put(`/events/${selectedEvent._id}`, {
         ...editingEvent,
+        date: new Date(editingEvent.date).toISOString(),
         price: parseFloat(editingEvent.price),
         max_capacity: parseInt(editingEvent.max_capacity),
         duration: parseInt(editingEvent.duration)
