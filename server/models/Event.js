@@ -1,0 +1,15 @@
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
+
+const eventSchema = new mongoose.Schema({
+  _id: { type: String, default: uuidv4 },
+  name: { type: String, required: true },
+  date: { type: Date, required: true },
+  duration: { type: Number, default: 90 },
+  price: { type: Number, required: true },
+  max_capacity: { type: Number, required: true },
+  type: { type: String, enum: ['public', 'private'], required: true },
+  booked: { type: Boolean, default: false }
+}, { timestamps: true });
+
+module.exports = mongoose.model('Event', eventSchema);
