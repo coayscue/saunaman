@@ -1,7 +1,7 @@
 const { Resend } = require("resend");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const SENDER = process.env.SENDER_EMAIL || "support@saunaman-sf.com";
+const SENDER = "Sauna Man SF <support@saunaman-sf.com>";
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
 async function sendBookingConfirmation(user, event, reservation) {
