@@ -43,4 +43,32 @@ async function sendBookingConfirmation(user, event, reservation) {
   }
 }
 
-module.exports = { sendBookingConfirmation };
+async function sendDonationConfirmation(email, name, amount) {
+  try {
+    const displayName = name || "Friend";
+    await resend.emails.send({
+      from: SENDER,
+      to: email,
+      subject: "Thank You for Your Donation!",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #b45309;">🔥 Sauna Man - Thank You!</h1>
+          <p>Hey ${displayName},</p>
+          <p>Thank you so much for your generous donation!</p>
+          <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="margin-top: 0;">Donation Received</h2>
+            <p><strong>Amount:</strong> $${amount.toFixed(2)}</p>
+          </div>
+          <p style="color: #666; font-size: 14px; margin-top: 30px;">
+            Your support helps us keep the sauna fires burning. We truly appreciate it!
+          </p>
+        </div>
+      `,
+    });
+    console.log(`Donation confirmation email sent to ${email}`);
+  } catch (err) {
+    console.error("Email send error:", err);
+  }
+}
+
+module.exports = { sendBookingConfirmation, sendDonationConfirmation };

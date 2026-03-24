@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import PrivateEvents from './pages/PrivateEvents';
 import BookEvent from './pages/BookEvent';
 import CancelReservation from './pages/CancelReservation';
+import Donate from './pages/Donate';
 import api from './api';
 import './App.css';
 
@@ -32,23 +33,42 @@ function AdminLoader() {
   return <AdminDashboard />;
 }
 
+function Tabs() {
+  const location = useLocation();
+  const tabs = [
+    { path: '/', label: 'Public Events' },
+    { path: '/private', label: 'Private Events' },
+    { path: '/donate', label: 'Donate' }
+  ];
+  const showTabs = tabs.some(t => t.path === location.pathname);
+  if (!showTabs) return null;
+  return (
+    <div className="page-tabs">
+      {tabs.map(tab => (
+        <Link
+          key={tab.path}
+          to={tab.path}
+          className={`page-tab ${location.pathname === tab.path ? 'active' : ''}`}
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
       <div className="App">
-        <nav className="navbar">
-          <Link to="/" className="nav-brand">🔥 Sauna Man</Link>
-          <div className="nav-links">
-            <Link to="/">Public Events</Link>
-            <Link to="/private">Private Events</Link>
-          </div>
-        </nav>
         <main className="main-content">
+          <Tabs />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/private" element={<PrivateEvents />} />
             <Route path="/book/:eventId" element={<BookEvent />} />
             <Route path="/cancel/:reservationId" element={<CancelReservation />} />
+            <Route path="/donate" element={<Donate />} />
             <Route path="*" element={<AdminLoader />} />
           </Routes>
         </main>

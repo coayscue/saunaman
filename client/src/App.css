@@ -15,38 +15,33 @@ body {
   min-height: 100vh;
 }
 
-.navbar {
+.page-tabs {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 32px;
-  background: #1a1a2e;
-  border-bottom: 2px solid #b45309;
+  gap: 0;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-.nav-brand {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #f59e0b;
+.page-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px;
   text-decoration: none;
+  color: #9ca3af;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
 }
 
-.nav-links {
-  display: flex;
-  gap: 20px;
+.page-tab:hover {
+  color: #b45309;
 }
 
-.nav-links a {
-  color: #e0e0e0;
-  text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.nav-links a:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #f59e0b;
+.page-tab.active {
+  color: #b45309;
+  border-bottom-color: #f59e0b;
 }
 
 .main-content {

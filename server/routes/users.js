@@ -2,6 +2,7 @@ const publicRouter = require('express').Router();
 const adminRouter = require('express').Router();
 const User = require('../models/User');
 const Reservation = require('../models/Reservation');
+const Donation = require('../models/Donation');
 
 // PUBLIC: Find or create user by email (used during booking)
 publicRouter.post('/find-or-create', async (req, res) => {
@@ -37,7 +38,8 @@ adminRouter.get('/:id', async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
     const reservations = await Reservation.find({ user: user._id }).populate('event');
-    res.json({ ...user.toObject(), reservations });
+    const donations = await Donation.find({ user: user._id }).sort({ date: -1 });
+    res.json({ ...user.toObject(), reservations, donations });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

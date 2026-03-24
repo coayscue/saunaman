@@ -38,11 +38,13 @@ app.use('/api/events', require('./routes/events').publicRouter);
 app.use('/api/users', require('./routes/users').publicRouter);
 app.use('/api/reservations', require('./routes/reservations').publicRouter);
 app.use('/api/payments', require('./routes/payments'));
+app.use('/api/donations', require('./routes/donations').publicRouter);
 
 // Admin routes (require token)
 app.use('/api/events', requireAdmin, require('./routes/events').adminRouter);
 app.use('/api/users', requireAdmin, require('./routes/users').adminRouter);
 app.use('/api/reservations', requireAdmin, require('./routes/reservations').adminRouter);
+app.use('/api/donations', requireAdmin, require('./routes/donations').adminRouter);
 
 const PORT = process.env.PORT || 5001;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/saunaman';

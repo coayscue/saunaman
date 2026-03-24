@@ -13,6 +13,7 @@ function AdminDashboard() {
   const [reservations, setReservations] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedReservation, setSelectedReservation] = useState(null);
+  const [donations, setDonations] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedEventReservations, setSelectedEventReservations] = useState([]);
   const [editingEvent, setEditingEvent] = useState(null);
@@ -23,14 +24,16 @@ function AdminDashboard() {
 
   const loadData = useCallback(async () => {
     try {
-      const [eventsRes, usersRes, reservationsRes] = await Promise.all([
+      const [eventsRes, usersRes, reservationsRes, donationsRes] = await Promise.all([
         api.get('/events'),
         api.get('/users'),
-        api.get('/reservations')
+        api.get('/reservations'),
+        api.get('/donations')
       ]);
       setEvents(eventsRes.data);
       setUsers(usersRes.data);
       setReservations(reservationsRes.data);
+      setDonations(donationsRes.data);
     } catch (err) {
       console.error('Error loading data:', err);
     }
@@ -162,6 +165,9 @@ function AdminDashboard() {
         <button className={`admin-tab ${tab === 'reservations' ? 'active' : ''}`} onClick={() => setTab('reservations')}>
           Reservations ({reservations.length})
         </button>
+        <button className={`admin-tab ${tab === 'donations' ? 'active' : ''}`} onClick={() => setTab('donations')}>
+          Donations ({donations.length})
+        </button>
       </div>
 
       {/* AGENDA TAB */}
@@ -288,6 +294,23 @@ function AdminDashboard() {
             </li>
           ))}
           {reservations.length === 0 && <p style={{ color: '#6b7280', padding: 16 }}>No reservations yet</p>}
+        </ul>
+      )}
+
+      {/* DONATIONS TAB */}
+      {tab === 'donations' && (
+        <ul className="admin-list">
+          {donations.map(d => (
+            <li key={d._id} onClick={() => d.user && handleUserClick(d.user._id)} style={{ cursor: d.user ? 'pointer' : 'default' }}>
+              <div>
+                <strong style={{ color: '#059669' }}>${d.amount}</strong>
+                <span style={{ color: '#6b7280', marginLeft: 12 }}>{d.user?.name || 'Unknown'}</span>
+                <span style={{ color: '#9ca3af', marginLeft: 8 }}>{d.user?.email}</span>
+              </div>
+              <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>{formatDate(d.date)}</span>
+            </li>
+          ))}
+          {donations.length === 0 && <p style={{ color: '#6b7280', padding: 16 }}>No donations yet</p>}
         </ul>
       )}
 
@@ -482,6 +505,21 @@ function AdminDashboard() {
               </ul>
             ) : (
               <p style={{ color: '#6b7280' }}>No reservations</p>
+            )}
+            <h3 style={{ color: '#92400e', marginTop: 20, marginBottom: 12 }}>Donations</h3>
+            {selectedUser.donations?.length > 0 ? (
+              <ul className="admin-list">
+                {selectedUser.donations.map(d => (
+                  <li key={d._id} style={{ cursor: 'default' }}>
+                    <div>
+                      <strong style={{ color: '#059669' }}>${d.amount}</strong>
+                    </div>
+                    <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>{formatDate(d.date)}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style={{ color: '#6b7280' }}>No donations</p>
             )}
           </div>
         </div>
