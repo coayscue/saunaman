@@ -42,7 +42,7 @@ function PrivateEvents() {
               {event.booked ? (
                 <span className="booked-tag" style={{ marginLeft: 8 }}>Fully Booked</span>
               ) : (
-                <Link to={`/book/${event._id}`}>
+                <Link to={`/book/${event._id}`} style={{ textDecoration: 'none' }}>
                   <button className="btn btn-primary" style={{ marginTop: 12, display: 'block' }}>Book Now</button>
                 </Link>
               )}

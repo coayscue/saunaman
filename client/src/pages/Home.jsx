@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
+import logo from '../images/sauna_man_logo.png';
 
 function Home() {
   const [events, setEvents] = useState([]);
@@ -24,9 +25,10 @@ function Home() {
 
   return (
     <div>
-      <h1>Public Sauna Sessions</h1>
+      <img src={logo} alt="Sauna Man" style={{ maxWidth: 200, display: 'block', margin: '0 auto 24px' }} />
+      <h1>Sauna & Plunge Events</h1>
       <p style={{ marginBottom: 24, color: '#aaa' }}>
-        Book a public sauna session. <Link to="/private" style={{ color: '#f59e0b' }}>Looking for a private session?</Link>
+        Book a public sauna & plunge event!<br/><br/> <Link to="/private" style={{ color: '#f59e0b' }}>Looking for a private event? Book one here.</Link>
       </p>
       {events.length === 0 ? (
         <p style={{ color: '#aaa' }}>No public events available right now. Check back soon!</p>
