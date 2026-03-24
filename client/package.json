@@ -23,7 +23,8 @@
   "scripts": {
     "start": "vite --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --host",
+    "prod": "vite build && vite preview --host"
   },
   "eslintConfig": {
     "extends": [
