@@ -179,12 +179,12 @@ function AdminDashboard() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #e5e7eb', textAlign: 'left' }}>
-                <th style={{ padding: '10px 12px', color: '#b45309' }}>Date</th>
-                <th style={{ padding: '10px 12px', color: '#b45309' }}>Time</th>
-                <th style={{ padding: '10px 12px', color: '#b45309' }}>Event</th>
-                <th style={{ padding: '10px 12px', color: '#b45309' }}>Type</th>
-                <th style={{ padding: '10px 12px', color: '#b45309', textAlign: 'center' }}>Capacity</th>
-                <th style={{ padding: '10px 12px', color: '#b45309', textAlign: 'right' }}>Price</th>
+                <th style={{ padding: '10px 12px', color: '#BA160C' }}>Date</th>
+                <th style={{ padding: '10px 12px', color: '#BA160C' }}>Time</th>
+                <th style={{ padding: '10px 12px', color: '#BA160C' }}>Event</th>
+                <th style={{ padding: '10px 12px', color: '#BA160C' }}>Type</th>
+                <th style={{ padding: '10px 12px', color: '#BA160C', textAlign: 'center' }}>Capacity</th>
+                <th style={{ padding: '10px 12px', color: '#BA160C', textAlign: 'right' }}>Price</th>
               </tr>
             </thead>
             <tbody>
@@ -440,7 +440,7 @@ function AdminDashboard() {
 
                 {selectedEventReservations.length > 0 && (
                   <>
-                    <h3 style={{ color: '#92400e', marginTop: 20, marginBottom: 12 }}>Registrants</h3>
+                    <h3 style={{ color: '#BA160C', marginTop: 20, marginBottom: 12 }}>Registrants</h3>
                     <ul className="admin-list">
                       {selectedEventReservations.map(res => (
                         <li key={res._id} style={{ cursor: 'default' }}>
@@ -488,7 +488,7 @@ function AdminDashboard() {
               <span className="detail-label">Credits</span>
               <span className="detail-value">{selectedUser.credits}</span>
             </div>
-            <h3 style={{ color: '#92400e', marginTop: 20, marginBottom: 12 }}>Reservations</h3>
+            <h3 style={{ color: '#BA160C', marginTop: 20, marginBottom: 12 }}>Reservations</h3>
             {selectedUser.reservations?.length > 0 ? (
               <ul className="admin-list">
                 {selectedUser.reservations.map(res => (
@@ -506,7 +506,7 @@ function AdminDashboard() {
             ) : (
               <p style={{ color: '#6b7280' }}>No reservations</p>
             )}
-            <h3 style={{ color: '#92400e', marginTop: 20, marginBottom: 12 }}>Donations</h3>
+            <h3 style={{ color: '#BA160C', marginTop: 20, marginBottom: 12 }}>Donations</h3>
             {selectedUser.donations?.length > 0 ? (
               <ul className="admin-list">
                 {selectedUser.donations.map(d => (
@@ -541,7 +541,7 @@ function AdminDashboard() {
                 {selectedReservation.cancelled ? 'Cancelled' : 'Active'}
               </span>
             </div>
-            <h3 style={{ color: '#92400e', marginTop: 20, marginBottom: 12 }}>Event</h3>
+            <h3 style={{ color: '#BA160C', marginTop: 20, marginBottom: 12 }}>Event</h3>
             <div className="detail-row">
               <span className="detail-label">Name</span>
               <span className="detail-value">{selectedReservation.event?.name}</span>
@@ -556,7 +556,7 @@ function AdminDashboard() {
                 {selectedReservation.event?.type}
               </span>
             </div>
-            <h3 style={{ color: '#92400e', marginTop: 20, marginBottom: 12 }}>User</h3>
+            <h3 style={{ color: '#BA160C', marginTop: 20, marginBottom: 12 }}>User</h3>
             <div className="detail-row">
               <span className="detail-label">Name</span>
               <span className="detail-value">{selectedReservation.user?.name}</span>
@@ -565,7 +565,7 @@ function AdminDashboard() {
               <span className="detail-label">Email</span>
               <span className="detail-value">{selectedReservation.user?.email}</span>
             </div>
-            <h3 style={{ color: '#92400e', marginTop: 20, marginBottom: 12 }}>Payment</h3>
+            <h3 style={{ color: '#BA160C', marginTop: 20, marginBottom: 12 }}>Payment</h3>
             {selectedReservation.payment ? (
               <>
                 <div className="detail-row">

@@ -33,36 +33,11 @@ function AdminLoader() {
   return <AdminDashboard />;
 }
 
-function Tabs() {
-  const location = useLocation();
-  const tabs = [
-    { path: '/', label: 'Public Events' },
-    { path: '/private', label: 'Private Events' },
-    { path: '/donate', label: 'Donate' }
-  ];
-  const showTabs = tabs.some(t => t.path === location.pathname);
-  if (!showTabs) return null;
-  return (
-    <div className="page-tabs">
-      {tabs.map(tab => (
-        <Link
-          key={tab.path}
-          to={tab.path}
-          className={`page-tab ${location.pathname === tab.path ? 'active' : ''}`}
-        >
-          {tab.label}
-        </Link>
-      ))}
-    </div>
-  );
-}
-
 function App() {
   return (
     <Router>
       <div className="App">
         <main className="main-content">
-          <Tabs />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/private" element={<PrivateEvents />} />

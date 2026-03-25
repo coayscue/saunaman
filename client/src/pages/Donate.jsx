@@ -6,6 +6,7 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import { Link } from "react-router-dom";
 import api from "../api";
 
 const stripePromise = loadStripe(
@@ -98,6 +99,7 @@ function Donate() {
 
   return (
     <div className="booking-container">
+      <Link to="/" style={{ textDecoration: 'none', color: '#BA160C', display: 'inline-block', marginBottom: 16, fontSize: '1.1rem' }}>&larr; Back Home</Link>
       <h1>Support Sauna Man</h1>
       <p style={{ color: "#aaa", marginBottom: 24 }}>
         Your donation helps us keep the sauna fires burning!

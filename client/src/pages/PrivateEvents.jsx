@@ -24,6 +24,7 @@ function PrivateEvents() {
 
   return (
     <div>
+      <Link to="/" style={{ textDecoration: 'none', color: '#BA160C', display: 'inline-block', marginBottom: 16, fontSize: '1.1rem' }}>&larr; Back Home</Link>
       <h1>Private Sauna Sessions</h1>
       <p style={{ marginBottom: 24, color: '#aaa' }}>
         Book an exclusive private sauna session for you and your group.

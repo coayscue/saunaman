@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
@@ -138,6 +138,7 @@ function BookEvent() {
 
   return (
     <div className="booking-container">
+      <Link to="/" style={{ textDecoration: 'none', color: '#BA160C', display: 'inline-block', marginBottom: 16, fontSize: '1.1rem' }}>&larr; Back Home</Link>
       <h1>Book: {event.name}</h1>
       <p style={{ color: "#60a5fa", marginBottom: 8 }}>
         {new Date(event.date).toLocaleDateString("en-US", {
