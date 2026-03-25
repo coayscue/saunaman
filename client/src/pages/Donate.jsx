@@ -152,7 +152,7 @@ function Donate() {
             />
           </div>
           <div className="form-group">
-            <label>Name (optional)</label>
+            <label>Name</label>
             <input
               type="text"
               value={name}

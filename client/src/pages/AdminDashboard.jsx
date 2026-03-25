@@ -305,7 +305,7 @@ function AdminDashboard() {
               <div>
                 <strong style={{ color: '#059669' }}>${d.amount}</strong>
                 <span style={{ color: '#6b7280', marginLeft: 12 }}>{d.user?.name || 'Unknown'}</span>
-                <span style={{ color: '#9ca3af', marginLeft: 8 }}>{d.user?.email}</span>
+                <span style={{ color: '#6b7280', marginLeft: 8 }}>{d.user?.email}</span>
               </div>
               <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>{formatDate(d.date)}</span>
             </li>
