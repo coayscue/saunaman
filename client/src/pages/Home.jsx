@@ -27,24 +27,24 @@ function Home() {
 
   return (
     <div>
-      <img src={logo} alt="Sauna Man" style={{ maxWidth: 200, display: 'block', margin: '0 auto 16px' }} />
+      <img src={logo} alt="Sauna Man" style={{ maxWidth: 300, display: 'block', margin: '0 auto 16px' }} />
       <PhotoCollage />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <a href="https://www.instagram.com/saunamansf/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-          <button className="btn" style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5)', color: '#ffffff' }}>
-            <img src={igLogo} alt="Instagram" width="18" height="18" style={{ borderRadius: 4 }} />
+          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C' }}>
+            <img src={igLogo} alt="Instagram" width="28" height="28" style={{ borderRadius: 4 }} />
             Follow Us
           </button>
         </a>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           <Link to="/private" style={{ textDecoration: 'none' }}>
-            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C' }}>🎉 Book a Private Event</button>
+            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>🎉</span><span>Book a Private Event</span></button>
           </Link>
           <Link to="/donate" style={{ textDecoration: 'none' }}>
-            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C' }}>🤝 Donate</button>
+            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>🤝</span><span>Donate</span></button>
           </Link>
           <Link to="/waiver" style={{ textDecoration: 'none' }}>
-            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C' }}>📄 Sign Waiver</button>
+            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>📄</span><span>Sign Waiver</span></button>
           </Link>
         </div>
       </div>
