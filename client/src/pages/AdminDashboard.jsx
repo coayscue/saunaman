@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -7,6 +8,7 @@ import api from '../api';
 const localizer = momentLocalizer(moment);
 
 function AdminDashboard() {
+  const location = useLocation();
   const [tab, setTab] = useState('agenda');
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
@@ -40,6 +42,17 @@ function AdminDashboard() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Auto-open event from ?event= query param
+  useEffect(() => {
+    const eventId = new URLSearchParams(location.search).get('event');
+    if (!eventId || events.length === 0) return;
+    const match = events.find(e => e._id === eventId);
+    if (match) {
+      setSelectedEvent(match);
+      setSelectedEventReservations(reservations.filter(r => r.event?._id === match._id && !r.cancelled));
+    }
+  }, [location.search, events, reservations]);
 
   const calendarEvents = events.map(e => ({
     id: e._id,
@@ -434,6 +447,29 @@ function AdminDashboard() {
                   </span>
                 </div>
 
+                {selectedEvent.type === 'private' && selectedEvent.location?.address && (
+                  <>
+                    <div className="detail-row">
+                      <span className="detail-label">Location</span>
+                      <span className="detail-value">{selectedEvent.location.name}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Address</span>
+                      <span className="detail-value">{selectedEvent.location.address}</span>
+                    </div>
+                    <div style={{ marginTop: 12, borderRadius: 8, overflow: 'hidden' }}>
+                      <iframe
+                        title="Event Location"
+                        width="100%"
+                        height="200"
+                        style={{ border: 0, display: 'block' }}
+                        loading="lazy"
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedEvent.location.address)}&output=embed`}
+                      />
+                    </div>
+                  </>
+                )}
+
                 <button className="btn btn-primary" style={{ width: '100%', marginTop: 16 }} onClick={handleEditEvent}>
                   Edit Event
                 </button>
@@ -487,6 +523,12 @@ function AdminDashboard() {
             <div className="detail-row">
               <span className="detail-label">Credits</span>
               <span className="detail-value">{selectedUser.credits}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Signed Waiver</span>
+              <span className="detail-value" style={{ color: selectedUser.signedWaiver ? '#059669' : '#dc2626' }}>
+                {selectedUser.signedWaiver ? 'Yes' : 'No'}
+              </span>
             </div>
             <h3 style={{ color: '#BA160C', marginTop: 20, marginBottom: 12 }}>Reservations</h3>
             {selectedUser.reservations?.length > 0 ? (

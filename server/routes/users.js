@@ -22,6 +22,27 @@ publicRouter.post('/find-or-create', async (req, res) => {
   }
 });
 
+// PUBLIC: Sign waiver (find or create user, mark waiver signed)
+publicRouter.post('/sign-waiver', async (req, res) => {
+  try {
+    const { email, name } = req.body;
+    if (!email || !name) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({ email, name, signedWaiver: true });
+    } else {
+      if (name) user.name = name;
+      user.signedWaiver = true;
+    }
+    await user.save();
+    res.json(user);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // ADMIN: Get all users
 adminRouter.get('/', async (req, res) => {
   try {

@@ -6,7 +6,8 @@ const reservationSchema = new mongoose.Schema({
   event: { type: String, ref: 'Event', required: true },
   user: { type: String, ref: 'User', required: true },
   date_created: { type: Date, default: Date.now },
-  cancelled: { type: Boolean, default: false }
+  cancelled: { type: Boolean, default: false },
+  review_email_sent: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Reservation', reservationSchema);

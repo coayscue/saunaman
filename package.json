@@ -5,7 +5,7 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "server": "node server/index.js",
+    "server": "nodemon server/index.js",
     "client": "cd client && npm start",
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },
@@ -27,8 +27,12 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "mongoose": "^9.3.2",
+    "multer": "^2.1.1",
     "resend": "^6.9.4",
     "stripe": "^20.4.1",
     "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

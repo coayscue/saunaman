@@ -10,7 +10,7 @@ import {
 import api from "../api";
 
 const stripePromise = loadStripe(
-  "pk_live_51TE1NPA5xEQP8Mr97kJ65MR3Ox0zoGZ9KHecTO6pKhLOhSpgIctCWmklG0CIrhbqEOvSfE0SD0t1GlcIVpDnAMfX006NhjaNCf",
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_51TE1NVArlo4kMrW9yXI9mWZuSY19PLImtpmv7T88Ck5vXFmGT2R9iknmCEufqGz5maJSamu03sAWVjvph0bqLein00XQHDTi5A"
 );
 
 function PaymentForm({ onSuccess, onError }) {
@@ -300,7 +300,14 @@ function BookEvent() {
           {clientSecret && (
             <Elements
               stripe={stripePromise}
-              options={{ clientSecret, appearance: { theme: "night" } }}
+              options={{ 
+                clientSecret, 
+                appearance: { theme: "night" },
+                mode: 'payment',
+                amount: event.price * 100, // Convert dollars to cents
+                currency: 'usd',
+                paymentMethodTypes: ['card']
+              }}
             >
               <PaymentForm
                 onSuccess={handlePaymentSuccess}

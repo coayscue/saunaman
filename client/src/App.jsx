@@ -5,6 +5,8 @@ import PrivateEvents from './pages/PrivateEvents';
 import BookEvent from './pages/BookEvent';
 import CancelReservation from './pages/CancelReservation';
 import Donate from './pages/Donate';
+import LeaveReview from './pages/LeaveReview';
+import Waiver from './pages/Waiver';
 import api from './api';
 import './App.css';
 
@@ -44,6 +46,8 @@ function App() {
             <Route path="/book/:eventId" element={<BookEvent />} />
             <Route path="/cancel/:reservationId" element={<CancelReservation />} />
             <Route path="/donate" element={<Donate />} />
+            <Route path="/review/:reservationId" element={<LeaveReview />} />
+            <Route path="/waiver" element={<Waiver />} />
             <Route path="*" element={<AdminLoader />} />
           </Routes>
         </main>
