@@ -110,7 +110,9 @@ router.get("/booked-slots", async (req, res) => {
 
 function calcPrice(tentCount, duration) {
   const base = tentCount === 2 ? 700 : 450;
-  return duration === 4 ? base * 2 : base;
+  if (duration === 4) return base * 2;
+  if (duration === 3) return Math.round(base * 1.5);
+  return base;
 }
 
 // POST create payment intent for private booking

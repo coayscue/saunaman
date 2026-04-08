@@ -461,7 +461,7 @@ function PrivateEvents() {
   }, [selectedDate]);
 
   const basePrice = tentCount === 2 ? 700 : 450;
-  const price = duration === 4 ? basePrice * 2 : basePrice;
+  const price = duration === 4 ? basePrice * 2 : duration === 3 ? Math.round(basePrice * 1.5) : basePrice;
   const capacity = tentCount === 2 ? 24 : 12;
 
   const hasLocation = selectedLocation || customPlace;
@@ -587,6 +587,20 @@ function PrivateEvents() {
                 <div className="duration-option-content">
                   <strong>2 Hours</strong>
                   <span className="duration-description">Perfect for most events</span>
+                </div>
+              </label>
+              <label className={`duration-option ${duration === 3 ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="duration"
+                  value={3}
+                  checked={duration === 3}
+                  onChange={() => setDuration(3)}
+                />
+                <div className="duration-option-content">
+                  <strong>3 Hours</strong>
+                  <span className="duration-description">A little extra time</span>
+                  <span className="duration-price-tag">+${Math.round(basePrice * 0.5)}</span>
                 </div>
               </label>
               <label className={`duration-option ${duration === 4 ? 'selected' : ''}`}>
