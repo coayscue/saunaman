@@ -1,53 +1,8 @@
 import React, { useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
+import StripePaymentForm from "../components/StripePaymentForm";
 import { Link } from "react-router-dom";
 import api from "../api";
 
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_51TE1NVArlo4kMrW9yXI9mWZuSY19PLImtpmv7T88Ck5vXFmGT2R9iknmCEufqGz5maJSamu03sAWVjvph0bqLein00XQHDTi5A",
-);
-
-function PaymentForm({ amount, email, name, onSuccess, onError }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [processing, setProcessing] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-    setProcessing(true);
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required",
-    });
-    if (error) {
-      onError(error.message);
-      setProcessing(false);
-    } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      onSuccess(paymentIntent.id);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <PaymentElement />
-      <button
-        type="submit"
-        disabled={!stripe || processing}
-        className="btn btn-primary"
-        style={{ marginTop: 20, width: "100%" }}
-      >
-        {processing ? "Processing..." : `Donate $${amount}`}
-      </button>
-    </form>
-  );
-}
 
 function Donate() {
   const [step, setStep] = useState(1); // 1=amount, 2=info, 3=payment, 4=done
@@ -93,7 +48,9 @@ function Donate() {
       });
       setStep(4);
     } catch (err) {
-      setError(err.response?.data?.error || "Error recording donation");
+      const msg = err.response?.data?.error || "Error recording donation";
+      alert(msg);
+      setError(msg);
     }
   };
 
@@ -169,25 +126,7 @@ function Donate() {
       {step === 3 && clientSecret && (
         <div>
           <h2>Payment — ${amount} Donation</h2>
-          <Elements
-            stripe={stripePromise}
-            options={{ 
-              clientSecret, 
-              appearance: { theme: "night" },
-              mode: 'payment',
-              amount: amount * 100, // Convert dollars to cents
-              currency: 'usd',
-              paymentMethodTypes: ['card']
-            }}
-          >
-            <PaymentForm
-              amount={amount}
-              email={email}
-              name={name}
-              onSuccess={handlePaymentSuccess}
-              onError={setError}
-            />
-          </Elements>
+          <StripePaymentForm clientSecret={clientSecret} onSuccess={handlePaymentSuccess} onError={setError} buttonLabel={`Donate $${amount}`} />
         </div>
       )}
 

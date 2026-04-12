@@ -1,53 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { loadStripe } from "@stripe/stripe-js";
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
+import StripePaymentForm from "../components/StripePaymentForm";
 import api from "../api";
-
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_51TE1NVArlo4kMrW9yXI9mWZuSY19PLImtpmv7T88Ck5vXFmGT2R9iknmCEufqGz5maJSamu03sAWVjvph0bqLein00XQHDTi5A"
-);
-
-function PaymentForm({ onSuccess, onError }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [processing, setProcessing] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-    setProcessing(true);
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required",
-    });
-    if (error) {
-      onError(error.message);
-      setProcessing(false);
-    } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      onSuccess(paymentIntent.id);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <PaymentElement />
-      <button
-        type="submit"
-        disabled={!stripe || processing}
-        className="btn btn-primary"
-        style={{ marginTop: 20, width: "100%" }}
-      >
-        {processing ? "Processing..." : "Pay Now"}
-      </button>
-    </form>
-  );
-}
+import LiabilityWaiver from "../components/LiabilityWaiver";
 
 function BookEvent() {
   const { eventId } = useParams();
@@ -128,7 +83,9 @@ function BookEvent() {
       });
       setStep(5);
     } catch (err) {
-      setError(err.response?.data?.error || "Error creating reservation");
+      const msg = err.response?.data?.error || "Error creating reservation";
+      alert(msg);
+      setError(msg);
     }
   };
 
@@ -213,57 +170,10 @@ function BookEvent() {
       {step === 3 && (
         <div>
           <h2>Liability Waiver</h2>
-          <div className="waiver-text">
-            <h3>SAUNA MAN LIABILITY WAIVER AND RELEASE</h3>
-            <p>
-              By signing this waiver, I acknowledge that I am voluntarily
-              participating in sauna sessions provided by Sauna Man.
-            </p>
-            <p>
-              I understand that sauna use involves exposure to high temperatures
-              and may pose health risks including but not limited to:
-              dehydration, heat exhaustion, dizziness, fainting, and
-              cardiovascular stress.
-            </p>
-            <p>
-              I confirm that I am in good physical health and have no medical
-              conditions that would prevent me from safely using a sauna. I have
-              consulted with my physician if I have any concerns about my
-              ability to participate.
-            </p>
-            <p>
-              I agree to follow all posted rules and guidelines, including time
-              limits and hydration recommendations.
-            </p>
-            <p>
-              I hereby release Sauna Man, its owners, operators, employees, and
-              agents from any and all liability, claims, demands, or causes of
-              action arising from my participation in sauna sessions.
-            </p>
-            <p>
-              I understand that this waiver is binding and applies to all
-              current and future visits.
-            </p>
-          </div>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 16,
-              cursor: "pointer",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={waiverAccepted}
-              onChange={(e) => setWaiverAccepted(e.target.checked)}
-            />
-            I have read and agree to the liability waiver
-          </label>
+          <LiabilityWaiver accepted={waiverAccepted} onChange={setWaiverAccepted} />
           <button
             className="btn btn-primary"
-            style={{ width: "100%" }}
+            style={{ width: "100%", marginTop: 24 }}
             disabled={!waiverAccepted}
             onClick={handleWaiverAccept}
           >
@@ -297,24 +207,7 @@ function BookEvent() {
               </button>
             </div>
           )}
-          {clientSecret && (
-            <Elements
-              stripe={stripePromise}
-              options={{ 
-                clientSecret, 
-                appearance: { theme: "night" },
-                mode: 'payment',
-                amount: event.price * 100, // Convert dollars to cents
-                currency: 'usd',
-                paymentMethodTypes: ['card']
-              }}
-            >
-              <PaymentForm
-                onSuccess={handlePaymentSuccess}
-                onError={setError}
-              />
-            </Elements>
-          )}
+          <StripePaymentForm clientSecret={clientSecret} onSuccess={handlePaymentSuccess} onError={setError} />
           {!clientSecret && user && user.credits <= 0 && (
             <p>Setting up payment...</p>
           )}
