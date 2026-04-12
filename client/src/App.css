@@ -1039,8 +1039,8 @@ h2 {
 }
 
 .review-photo {
-  width: 80px;
-  height: 80px;
+  width: 160px;
+  height: 160px;
   object-fit: cover;
   border-radius: 8px;
   flex-shrink: 0;

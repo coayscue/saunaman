@@ -24,7 +24,7 @@ app.use((req, res, next) => {
     const ms = Date.now() - start;
     const line = `${req.method} ${req.originalUrl} → ${res.statusCode} (${ms}ms)`;
     if (res.statusCode >= 400) {
-      console.error(line, responseBody ? JSON.stringify(responseBody) : '');
+      console.error(line, responseBody ? JSON.stringify(responseBody) : "");
     } else {
       console.log(line);
     }
@@ -119,7 +119,7 @@ async function sendPendingReviewEmails() {
       if (!reservation.event || !reservation.user) continue;
       const eventEnd = new Date(
         reservation.event.date.getTime() +
-          (reservation.event.duration || 90) * 60 * 1000,
+          ((reservation.event.duration || 90) + 60) * 60 * 1000,
       );
       if (eventEnd < now) {
         await sendReviewRequest(
@@ -142,8 +142,8 @@ mongoose
     console.log("Connected to MongoDB");
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-    // Check for pending review emails every 30 minutes
-    setInterval(sendPendingReviewEmails, 30 * 60 * 1000);
+    // Check for pending review emails every 60 minutes
+    setInterval(sendPendingReviewEmails, 60 * 60 * 1000);
     // Also run once on startup after a short delay
     setTimeout(sendPendingReviewEmails, 10 * 1000);
   })
