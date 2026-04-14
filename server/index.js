@@ -70,6 +70,7 @@ app.use("/api/payments", require("./routes/payments"));
 app.use("/api/private-bookings", require("./routes/privateBookings"));
 app.use("/api/reviews", require("./routes/reviews"));
 app.use("/api/donations", require("./routes/donations").publicRouter);
+app.use("/api/invoices", require("./routes/invoices").publicRouter);
 
 // Admin routes (require token)
 app.use("/api/events", requireAdmin, require("./routes/events").adminRouter);
@@ -83,6 +84,11 @@ app.use(
   "/api/donations",
   requireAdmin,
   require("./routes/donations").adminRouter,
+);
+app.use(
+  "/api/invoices",
+  requireAdmin,
+  require("./routes/invoices").adminRouter,
 );
 
 // Error handler (must be after all routes)

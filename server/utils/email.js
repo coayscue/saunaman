@@ -226,4 +226,64 @@ async function sendReviewRequest(user, event, reservation) {
   }
 }
 
-module.exports = { sendBookingConfirmation, sendDonationConfirmation, sendPrivateBookingNotification, sendPrivateBookingReceipt, sendReviewRequest };
+async function sendInvoiceCreated(user, invoice) {
+  try {
+    const payUrl = `${APP_URL}/invoice/${invoice._id}`;
+    await resend.emails.send({
+      from: SENDER,
+      to: user.email,
+      subject: `Invoice from Sauna Man - $${invoice.amount.toFixed(2)}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #b45309;">Sauna Man - Invoice</h1>
+          <p>Hey ${user.name},</p>
+          <p>You have a new invoice from Sauna Man.</p>
+          <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="margin-top: 0;">Invoice Details</h2>
+            <p><strong>Amount Due:</strong> $${invoice.amount.toFixed(2)}</p>
+            <p><strong>Date:</strong> ${new Date(invoice.date_created).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+          </div>
+          <a href="${payUrl}" style="display: inline-block; background: #FF4F00; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; margin: 20px 0;">
+            Pay Invoice
+          </a>
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">
+            If you have any questions about this invoice, please contact us at support@saunaman-sf.com.
+          </p>
+        </div>
+      `,
+    });
+    console.log(`Invoice email sent to ${user.email}`);
+  } catch (err) {
+    console.error("Invoice email error:", err);
+  }
+}
+
+async function sendInvoicePaid(user, invoice) {
+  try {
+    await resend.emails.send({
+      from: SENDER,
+      to: user.email,
+      subject: `Payment Received - Invoice $${invoice.amount.toFixed(2)}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #b45309;">Sauna Man - Payment Received</h1>
+          <p>Hey ${user.name},</p>
+          <p>Thank you for your payment! Your invoice has been paid.</p>
+          <div style="background: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="margin-top: 0; color: #059669;">Paid</h2>
+            <p><strong>Amount:</strong> $${invoice.amount.toFixed(2)}</p>
+            <p><strong>Date Paid:</strong> ${new Date(invoice.date_paid).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+          </div>
+          <p style="color: #666; font-size: 14px; margin-top: 30px;">
+            Thank you for your business!
+          </p>
+        </div>
+      `,
+    });
+    console.log(`Invoice paid email sent to ${user.email}`);
+  } catch (err) {
+    console.error("Invoice paid email error:", err);
+  }
+}
+
+module.exports = { sendBookingConfirmation, sendDonationConfirmation, sendPrivateBookingNotification, sendPrivateBookingReceipt, sendReviewRequest, sendInvoiceCreated, sendInvoicePaid };

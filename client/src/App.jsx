@@ -7,6 +7,7 @@ import CancelReservation from './pages/CancelReservation';
 import Donate from './pages/Donate';
 import LeaveReview from './pages/LeaveReview';
 import Waiver from './pages/Waiver';
+import PayInvoice from './pages/PayInvoice';
 import api from './api';
 import './App.css';
 
@@ -48,6 +49,7 @@ function App() {
             <Route path="/donate" element={<Donate />} />
             <Route path="/review/:reservationId" element={<LeaveReview />} />
             <Route path="/waiver" element={<Waiver />} />
+            <Route path="/invoice/:invoiceId" element={<PayInvoice />} />
             <Route path="*" element={<AdminLoader />} />
           </Routes>
         </main>

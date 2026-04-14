@@ -23,19 +23,26 @@ function AdminDashboard() {
   const [newEvent, setNewEvent] = useState({
     name: '', date: '', price: '', max_capacity: '', type: 'public', duration: 90
   });
+  const [invoices, setInvoices] = useState([]);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showCreateInvoice, setShowCreateInvoice] = useState(false);
+  const [newInvoice, setNewInvoice] = useState({ name: '', email: '', amount: '', description: '' });
+  const [copiedInvoiceId, setCopiedInvoiceId] = useState(null);
 
   const loadData = useCallback(async () => {
     try {
-      const [eventsRes, usersRes, reservationsRes, donationsRes] = await Promise.all([
+      const [eventsRes, usersRes, reservationsRes, donationsRes, invoicesRes] = await Promise.all([
         api.get('/events'),
         api.get('/users'),
         api.get('/reservations'),
-        api.get('/donations')
+        api.get('/donations'),
+        api.get('/invoices')
       ]);
       setEvents(eventsRes.data);
       setUsers(usersRes.data);
       setReservations(reservationsRes.data);
       setDonations(donationsRes.data);
+      setInvoices(invoicesRes.data);
     } catch (err) {
       console.error('Error loading data:', err);
     }
@@ -181,6 +188,9 @@ function AdminDashboard() {
         <button className={`admin-tab ${tab === 'donations' ? 'active' : ''}`} onClick={() => setTab('donations')}>
           Donations ({donations.length})
         </button>
+        <button className={`admin-tab ${tab === 'invoices' ? 'active' : ''}`} onClick={() => setTab('invoices')}>
+          Invoices ({invoices.length})
+        </button>
       </div>
 
       {/* AGENDA TAB */}
@@ -325,6 +335,160 @@ function AdminDashboard() {
           ))}
           {donations.length === 0 && <p style={{ color: '#6b7280', padding: 16 }}>No donations yet</p>}
         </ul>
+      )}
+
+      {/* INVOICES TAB */}
+      {tab === 'invoices' && (
+        <div>
+          <button className="btn btn-primary" style={{ marginBottom: 16 }} onClick={() => setShowCreateInvoice(true)}>
+            + Create Invoice
+          </button>
+          <ul className="admin-list">
+            {invoices.map(inv => (
+              <li key={inv._id} onClick={() => setSelectedInvoice(inv)}>
+                <div>
+                  <strong style={{ color: '#059669' }}>${inv.amount.toFixed(2)}</strong>
+                  <span style={{ color: '#6b7280', marginLeft: 12 }}>{inv.user?.name || 'Unknown'}</span>
+                  <span style={{ color: '#6b7280', marginLeft: 8 }}>{inv.user?.email}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span className={`badge ${inv.cancelled ? 'badge-cancelled' : inv.paid ? 'badge-active' : 'badge-private'}`}>
+                    {inv.cancelled ? 'Cancelled' : inv.paid ? 'Paid' : 'Unpaid'}
+                  </span>
+                  <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>{formatDate(inv.date_created)}</span>
+                </div>
+              </li>
+            ))}
+            {invoices.length === 0 && <p style={{ color: '#6b7280', padding: 16 }}>No invoices yet</p>}
+          </ul>
+        </div>
+      )}
+
+      {/* CREATE INVOICE MODAL */}
+      {showCreateInvoice && (
+        <div className="modal-overlay" onClick={() => setShowCreateInvoice(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowCreateInvoice(false)}>×</button>
+            <h2>Create Invoice</h2>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const invoiceData = {
+                name: newInvoice.name,
+                email: newInvoice.email,
+                amount: parseFloat(newInvoice.amount),
+                description: newInvoice.description
+              };
+              setShowCreateInvoice(false);
+              setNewInvoice({ name: '', email: '', amount: '', description: '' });
+              try {
+                await api.post('/invoices', invoiceData);
+                loadData();
+              } catch (err) {
+                alert(err.response?.data?.error || 'Error creating invoice');
+              }
+            }}>
+              <div className="form-group">
+                <label>Name</label>
+                <input type="text" value={newInvoice.name} onChange={e => setNewInvoice({ ...newInvoice, name: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" value={newInvoice.email} onChange={e => setNewInvoice({ ...newInvoice, email: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <label>Amount ($)</label>
+                <input type="number" step="0.01" min="0.01" value={newInvoice.amount} onChange={e => setNewInvoice({ ...newInvoice, amount: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <label>Description (optional)</label>
+                <textarea value={newInvoice.description} onChange={e => setNewInvoice({ ...newInvoice, description: e.target.value })} rows={3} style={{ width: '100%', resize: 'vertical' }} placeholder="What is this invoice for?" />
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Create & Send Invoice</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* INVOICE DETAIL MODAL */}
+      {selectedInvoice && (
+        <div className="modal-overlay" onClick={() => setSelectedInvoice(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelectedInvoice(null)}>×</button>
+            <h2>Invoice Details</h2>
+            <div className="detail-row">
+              <span className="detail-label">Status</span>
+              <span className={`badge ${selectedInvoice.cancelled ? 'badge-cancelled' : selectedInvoice.paid ? 'badge-active' : 'badge-private'}`}>
+                {selectedInvoice.cancelled ? 'Cancelled' : selectedInvoice.paid ? 'Paid' : 'Unpaid'}
+              </span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Amount</span>
+              <span className="detail-value" style={{ color: '#059669', fontWeight: 600 }}>${selectedInvoice.amount.toFixed(2)}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Name</span>
+              <span className="detail-value">{selectedInvoice.user?.name}</span>
+            </div>
+            <div className="detail-row">
+              <span className="detail-label">Email</span>
+              <span className="detail-value">{selectedInvoice.user?.email}</span>
+            </div>
+            {selectedInvoice.description && (
+              <div className="detail-row">
+                <span className="detail-label">Description</span>
+                <span className="detail-value">{selectedInvoice.description}</span>
+              </div>
+            )}
+            <div className="detail-row">
+              <span className="detail-label">Date Created</span>
+              <span className="detail-value">{formatDate(selectedInvoice.date_created)}</span>
+            </div>
+            {selectedInvoice.paid && selectedInvoice.date_paid && (
+              <div className="detail-row">
+                <span className="detail-label">Date Paid</span>
+                <span className="detail-value" style={{ color: '#059669' }}>{formatDate(selectedInvoice.date_paid)}</span>
+              </div>
+            )}
+            {selectedInvoice.stripe_payment_id && (
+              <div className="detail-row">
+                <span className="detail-label">Stripe ID</span>
+                <span className="detail-value" style={{ fontSize: '0.85rem', wordBreak: 'break-all' }}>{selectedInvoice.stripe_payment_id}</span>
+              </div>
+            )}
+
+            <button
+              className="btn btn-secondary"
+              style={{ width: '100%', marginTop: 16 }}
+              onClick={() => {
+                const url = `${window.location.origin}/invoice/${selectedInvoice._id}`;
+                navigator.clipboard.writeText(url);
+                setCopiedInvoiceId(selectedInvoice._id);
+                setTimeout(() => setCopiedInvoiceId(null), 2000);
+              }}
+            >
+              {copiedInvoiceId === selectedInvoice._id ? 'Copied!' : 'Copy Payment Link'}
+            </button>
+
+            {!selectedInvoice.paid && !selectedInvoice.cancelled && (
+              <button
+                className="btn btn-danger"
+                style={{ width: '100%', marginTop: 8 }}
+                onClick={async () => {
+                  if (!window.confirm('Are you sure you want to cancel this invoice?')) return;
+                  try {
+                    await api.post(`/invoices/${selectedInvoice._id}/cancel`);
+                    setSelectedInvoice(null);
+                    loadData();
+                  } catch (err) {
+                    alert(err.response?.data?.error || 'Error cancelling invoice');
+                  }
+                }}
+              >
+                Cancel Invoice
+              </button>
+            )}
+          </div>
+        </div>
       )}
 
       {/* CREATE EVENT MODAL */}
