@@ -14,7 +14,7 @@ publicRouter.post("/create-intent", async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
       currency: "usd",
-      payment_method_types: ["card"],
+      payment_method_types: ["apple_pay", "card"],
     });
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {

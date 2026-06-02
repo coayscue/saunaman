@@ -16,7 +16,10 @@ function Home() {
 
   useEffect(() => {
     api.get('/events?type=public')
-      .then(res => setEvents(res.data))
+      .then(res => {
+        const cutoff = new Date(Date.now() - 4 * 60 * 60 * 1000);
+        setEvents(res.data.filter(e => new Date(e.date) >= cutoff));
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
     api.get('/reviews').then(res => setReviews(res.data)).catch(() => {});

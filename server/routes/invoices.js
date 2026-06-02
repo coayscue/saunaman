@@ -21,13 +21,15 @@ publicRouter.post("/:id/create-intent", async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) return res.status(404).json({ error: "Invoice not found" });
-    if (invoice.paid) return res.status(400).json({ error: "Invoice already paid" });
-    if (invoice.cancelled) return res.status(400).json({ error: "Invoice has been cancelled" });
+    if (invoice.paid)
+      return res.status(400).json({ error: "Invoice already paid" });
+    if (invoice.cancelled)
+      return res.status(400).json({ error: "Invoice has been cancelled" });
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(invoice.amount * 100),
       currency: "usd",
-      payment_method_types: ["card"],
+      payment_method_types: ["apple_pay", "card"],
     });
     res.json({
       clientSecret: paymentIntent.client_secret,
@@ -44,8 +46,10 @@ publicRouter.post("/:id/pay", async (req, res) => {
     const { stripePaymentId } = req.body;
     const invoice = await Invoice.findById(req.params.id).populate("user");
     if (!invoice) return res.status(404).json({ error: "Invoice not found" });
-    if (invoice.paid) return res.status(400).json({ error: "Invoice already paid" });
-    if (invoice.cancelled) return res.status(400).json({ error: "Invoice has been cancelled" });
+    if (invoice.paid)
+      return res.status(400).json({ error: "Invoice already paid" });
+    if (invoice.cancelled)
+      return res.status(400).json({ error: "Invoice has been cancelled" });
 
     invoice.paid = true;
     invoice.date_paid = new Date();
@@ -63,7 +67,9 @@ publicRouter.post("/:id/pay", async (req, res) => {
 // ADMIN: Get all invoices
 adminRouter.get("/", async (req, res) => {
   try {
-    const invoices = await Invoice.find().populate("user").sort({ date_created: -1 });
+    const invoices = await Invoice.find()
+      .populate("user")
+      .sort({ date_created: -1 });
     res.json(invoices);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -75,7 +81,9 @@ adminRouter.post("/", async (req, res) => {
   try {
     const { name, email, amount, description } = req.body;
     if (!name || !email || !amount) {
-      return res.status(400).json({ error: "Name, email, and amount are required" });
+      return res
+        .status(400)
+        .json({ error: "Name, email, and amount are required" });
     }
 
     // Find or create user
@@ -90,7 +98,7 @@ adminRouter.post("/", async (req, res) => {
 
     const invoice = new Invoice({
       amount: parseFloat(amount),
-      description: description || '',
+      description: description || "",
       user: user._id,
     });
     await invoice.save();
@@ -111,7 +119,8 @@ adminRouter.post("/:id/cancel", async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id).populate("user");
     if (!invoice) return res.status(404).json({ error: "Invoice not found" });
-    if (invoice.paid) return res.status(400).json({ error: "Cannot cancel a paid invoice" });
+    if (invoice.paid)
+      return res.status(400).json({ error: "Cannot cancel a paid invoice" });
 
     invoice.cancelled = true;
     await invoice.save();
