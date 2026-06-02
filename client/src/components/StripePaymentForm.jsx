@@ -52,7 +52,7 @@ function InnerForm({ onSuccess, onError, buttonLabel }) {
 function StripePaymentForm({ clientSecret, onSuccess, onError, buttonLabel = 'Pay Now', appearance = { theme: 'stripe' } }) {
   if (!clientSecret) return null;
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
+    <Elements stripe={stripePromise} options={{ clientSecret, appearance, wallets: { applePay: import.meta.env.PROD ? 'auto' : 'never' } }}>
       <InnerForm onSuccess={onSuccess} onError={onError} buttonLabel={buttonLabel} />
     </Elements>
   );

@@ -4,6 +4,36 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const SENDER = "Sauna Man SF <support@saunaman-sf.com>";
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
+function formatICSDate(date) {
+  return new Date(date).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
+
+function buildICS({ uid, summary, description, location, start, durationMinutes }) {
+  const dtStart = formatICSDate(start);
+  const dtEnd = formatICSDate(new Date(new Date(start).getTime() + durationMinutes * 60000));
+  const dtStamp = formatICSDate(new Date());
+  const safeDesc = (description || "").replace(/\n/g, "\\n");
+  const safeLoc = (location || "").replace(/,/g, "\\,");
+
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Sauna Man SF//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${uid}@saunaman-sf.com`,
+    `DTSTAMP:${dtStamp}`,
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
+    `SUMMARY:${summary}`,
+    `DESCRIPTION:${safeDesc}`,
+    `LOCATION:${safeLoc}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
 async function sendBookingConfirmation(user, event, reservation) {
   try {
     const cancelUrl = `${APP_URL}/cancel/${reservation._id}`;
@@ -16,10 +46,20 @@ async function sendBookingConfirmation(user, event, reservation) {
       minute: "2-digit",
     });
 
+    const ics = buildICS({
+      uid: reservation._id,
+      summary: event.name,
+      description: `Sauna Man SF - ${event.type === "public" ? "Public" : "Private"} Session`,
+      location: event.location?.address || event.location?.name || "",
+      start: event.date,
+      durationMinutes: event.duration || 90,
+    });
+
     await resend.emails.send({
       from: SENDER,
       to: user.email,
       subject: `Booking Confirmed - ${event.name}`,
+      attachments: [{ filename: "sauna-session.ics", content: Buffer.from(ics).toString("base64") }],
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #b45309;">🔥 Sauna Man - Booking Confirmed!</h1>
@@ -29,6 +69,7 @@ async function sendBookingConfirmation(user, event, reservation) {
             <h2 style="margin-top: 0;">${event.name}</h2>
             <p><strong>Date:</strong> ${eventDate}</p>
             <p><strong>Type:</strong> ${event.type === "public" ? "Public Session" : "Private Session"}</p>
+            ${event.location && event.location.name ? `<p><strong>Location:</strong> <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location.address || event.location.name)}" style="color: #b45309;">${event.location.name}</a></p>` : ""}
           </div>
           <p style="margin-top: 40px;">Need to cancel? <a href="${cancelUrl}" style="color: #dc2626; text-decoration: none;">Cancel Reservation</a></p>
           <p style="color: #666; font-size: 12px; margin-top: 30px;">
@@ -105,10 +146,20 @@ async function sendPrivateBookingNotification(user, event, location) {
       </div>
     `;
 
+    const ics = buildICS({
+      uid: event._id,
+      summary: `Private Booking - ${user.name}`,
+      description: `${user.name} (${user.email}, ${user.phone || "no phone"}) — ${event.tent_count} tent(s), ${event.duration} min at ${location.name}`,
+      location: location.address || location.name,
+      start: event.date,
+      durationMinutes: event.duration || 120,
+    });
+
     await resend.emails.send({
       from: SENDER,
       to: ["support@saunaman-sf.com", "ajensign@gmail.com"],
       subject: `New Private Booking - ${user.name} - ${eventDate}`,
+      attachments: [{ filename: "private-booking.ics", content: Buffer.from(ics).toString("base64") }],
       html,
     });
     console.log("Private booking notification sent to admins");
@@ -132,10 +183,20 @@ async function sendPrivateBookingReceipt(user, event, reservation, location, pri
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address)}`;
     const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${location.lat},${location.lng}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${location.lat},${location.lng}&key=${process.env.GOOGLE_MAPS_API_KEY || ""}`;
 
+    const ics = buildICS({
+      uid: reservation._id,
+      summary: "Private Sauna Session - Sauna Man SF",
+      description: `Private sauna booking at ${location.name}. ${event.tent_count} tent(s), up to ${event.max_capacity} people.`,
+      location: location.address || location.name,
+      start: event.date,
+      durationMinutes: event.duration || 120,
+    });
+
     await resend.emails.send({
       from: SENDER,
       to: user.email,
       subject: `Receipt - Private Sauna Booking - ${eventDate}`,
+      attachments: [{ filename: "sauna-session.ics", content: Buffer.from(ics).toString("base64") }],
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #b45309;">🔥 Sauna Man - Booking Receipt</h1>

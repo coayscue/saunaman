@@ -2,7 +2,7 @@ const publicRouter = require("express").Router();
 const adminRouter = require("express").Router();
 const Donation = require("../models/Donation");
 const User = require("../models/User");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { createPaymentIntent } = require("../utils/stripe");
 const { sendDonationConfirmation } = require("../utils/email");
 
 // PUBLIC: Create payment intent for donation
@@ -11,11 +11,7 @@ publicRouter.post("/create-intent", async (req, res) => {
     const { amount } = req.body;
     if (!amount || amount < 1)
       return res.status(400).json({ error: "Minimum donation is $1" });
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100),
-      currency: "usd",
-      payment_method_types: ["apple_pay", "card"],
-    });
+    const paymentIntent = await createPaymentIntent(amount);
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
     res.status(400).json({ error: err.message });

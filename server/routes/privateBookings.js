@@ -3,7 +3,7 @@ const Event = require("../models/Event");
 const User = require("../models/User");
 const Reservation = require("../models/Reservation");
 const Payment = require("../models/Payment");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { stripe, createPaymentIntent } = require("../utils/stripe");
 const {
   sendPrivateBookingNotification,
   sendPrivateBookingReceipt,
@@ -120,11 +120,7 @@ router.post("/create-intent", async (req, res) => {
   try {
     const { tentCount, duration = 2 } = req.body;
     const price = calcPrice(tentCount, duration);
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(price * 100),
-      currency: "usd",
-      payment_method_types: ["apple_pay", "card"],
-    });
+    const paymentIntent = await createPaymentIntent(price);
     res.json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,

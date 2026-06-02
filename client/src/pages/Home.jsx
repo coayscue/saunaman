@@ -36,7 +36,7 @@ function Home() {
 
   return (
     <div style={{ maxWidth: '80%', margin: '0 auto' }}>
-      <img src={logo} alt="Sauna Man" style={{ maxWidth: 300, display: 'block', margin: '0 auto 16px' }} />
+      <img src={logo} alt="Sauna Man" style={{ maxWidth: 'min(300px, 40vw)', display: 'block', margin: '0 auto 8px' }} />
       <PhotoCollage />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <a href="https://www.instagram.com/saunamansf/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
@@ -46,9 +46,6 @@ function Home() {
           </button>
         </a>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          <Link to="/private" style={{ textDecoration: 'none' }}>
-            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>🎉</span><span>Book a Private Event</span></button>
-          </Link>
           <Link to="/donate" style={{ textDecoration: 'none' }}>
             <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>🤝</span><span>Donate</span></button>
           </Link>
@@ -57,7 +54,13 @@ function Home() {
           </Link>
         </div>
       </div>
-      <h1>Sauna & Plunge Events</h1>
+      <h1 style={{ textAlign: 'center' }}>Private Events</h1>
+      <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
+        <Link to="/private" style={{ textDecoration: 'none' }}>
+          <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>🎉</span><span>Book a Private Event</span></button>
+        </Link>
+      </div>
+      <h1 style={{ textAlign: 'center' }}>Sauna & Plunge Events</h1>
       {events.length === 0 ? (
         <p style={{ color: '#aaa' }}>No public events available right now. Check back soon!</p>
       ) : (

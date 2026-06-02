@@ -2,7 +2,7 @@ const publicRouter = require("express").Router();
 const adminRouter = require("express").Router();
 const Invoice = require("../models/Invoice");
 const User = require("../models/User");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { createPaymentIntent } = require("../utils/stripe");
 const { sendInvoiceCreated, sendInvoicePaid } = require("../utils/email");
 
 // PUBLIC: Get invoice by ID (for payment page)
@@ -26,11 +26,7 @@ publicRouter.post("/:id/create-intent", async (req, res) => {
     if (invoice.cancelled)
       return res.status(400).json({ error: "Invoice has been cancelled" });
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(invoice.amount * 100),
-      currency: "usd",
-      payment_method_types: ["apple_pay", "card"],
-    });
+    const paymentIntent = await createPaymentIntent(invoice.amount);
     res.json({
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,

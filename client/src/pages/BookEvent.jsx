@@ -96,7 +96,7 @@ function BookEvent() {
   return (
     <div className="booking-container">
       <Link to="/" style={{ textDecoration: 'none', color: '#BA160C', display: 'inline-block', marginBottom: 16, fontSize: '1.1rem' }}>&larr; Back Home</Link>
-      <h1>Book: {event.name}</h1>
+      <h2>Book: {event.name}</h2>
       <p style={{ color: "#60a5fa", marginBottom: 8 }}>
         {new Date(event.date).toLocaleDateString("en-US", {
           weekday: "long",
@@ -106,9 +106,31 @@ function BookEvent() {
           minute: "2-digit",
         })}
       </p>
-      <p style={{ color: "#10b981", fontSize: "1.2rem", marginBottom: 24 }}>
+      <p style={{ color: "#10b981", fontSize: "1.2rem", marginBottom: 16 }}>
         ${event.price}
       </p>
+      {event.location?.name && (
+        <div style={{ marginBottom: 24 }}>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location.address || event.location.name)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#BA160C', fontWeight: 600, textDecoration: 'none', display: 'block', marginBottom: 8 }}
+          >
+            📍 {event.location.name}
+          </a>
+          <div style={{ borderRadius: 8, overflow: 'hidden' }}>
+            <iframe
+              title="Event Location"
+              width="100%"
+              height="130"
+              style={{ border: 0, display: 'block' }}
+              loading="lazy"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(event.location.address || event.location.name)}&output=embed`}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="step-indicator">
         {[1, 2, 3, 4].map((s) => (

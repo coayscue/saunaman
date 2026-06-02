@@ -4,6 +4,7 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import api from '../api';
+import LocationPicker from '../components/LocationPicker';
 
 const localizer = momentLocalizer(moment);
 
@@ -23,6 +24,11 @@ function AdminDashboard() {
   const [newEvent, setNewEvent] = useState({
     name: '', date: '', price: '', max_capacity: '', type: 'public', duration: 90
   });
+  const [presetLocations, setPresetLocations] = useState([]);
+  const [newEventLocation, setNewEventLocation] = useState(null); // selected preset id
+  const [newEventCustomPlace, setNewEventCustomPlace] = useState(null); // { name, address, lat, lng }
+  const [editingEventLocation, setEditingEventLocation] = useState(null); // selected preset id
+  const [editingEventCustomPlace, setEditingEventCustomPlace] = useState(null); // { name, address, lat, lng }
   const [invoices, setInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
@@ -50,6 +56,10 @@ function AdminDashboard() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  useEffect(() => {
+    api.get('/private-bookings/locations').then(res => setPresetLocations(res.data)).catch(() => {});
+  }, []);
+
   // Auto-open event from ?event= query param
   useEffect(() => {
     const eventId = new URLSearchParams(location.search).get('event');
@@ -71,16 +81,22 @@ function AdminDashboard() {
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
+    const resolvedLocation = newEventLocation
+      ? presetLocations.find(l => l.id === newEventLocation)
+      : newEventCustomPlace || undefined;
     try {
       await api.post('/events', {
         ...newEvent,
         date: new Date(newEvent.date).toISOString(),
         price: parseFloat(newEvent.price),
         max_capacity: parseInt(newEvent.max_capacity),
-        duration: parseInt(newEvent.duration)
+        duration: parseInt(newEvent.duration),
+        ...(resolvedLocation ? { location: { name: resolvedLocation.name, address: resolvedLocation.address, lat: resolvedLocation.lat || null, lng: resolvedLocation.lng || null } } : {})
       });
       setShowCreateEvent(false);
-      setNewEvent({ name: '', date: '', price: '', max_capacity: '', type: 'public' });
+      setNewEvent({ name: '', date: '', price: '', max_capacity: '', type: 'public', duration: 90 });
+      setNewEventLocation(null);
+      setNewEventCustomPlace(null);
       loadData();
     } catch (err) {
       alert(err.response?.data?.error || 'Error creating event');
@@ -112,20 +128,30 @@ function AdminDashboard() {
       duration: selectedEvent.duration || 90,
       type: selectedEvent.type
     });
+    setEditingEventLocation(null);
+    setEditingEventCustomPlace(selectedEvent.location?.name ? { ...selectedEvent.location } : null);
   };
 
   const handleSaveEvent = async (e) => {
     e.preventDefault();
+    const resolvedLocation = editingEventLocation
+      ? presetLocations.find(l => l.id === editingEventLocation)
+      : editingEventCustomPlace || undefined;
     try {
       const updated = await api.put(`/events/${selectedEvent._id}`, {
         ...editingEvent,
         date: new Date(editingEvent.date).toISOString(),
         price: parseFloat(editingEvent.price),
         max_capacity: parseInt(editingEvent.max_capacity),
-        duration: parseInt(editingEvent.duration)
+        duration: parseInt(editingEvent.duration),
+        location: resolvedLocation
+          ? { name: resolvedLocation.name, address: resolvedLocation.address, lat: resolvedLocation.lat || null, lng: resolvedLocation.lng || null }
+          : null
       });
       setSelectedEvent(updated.data);
       setEditingEvent(null);
+      setEditingEventLocation(null);
+      setEditingEventCustomPlace(null);
       loadData();
     } catch (err) {
       alert(err.response?.data?.error || 'Error updating event');
@@ -525,6 +551,16 @@ function AdminDashboard() {
                   <option value="private">Private</option>
                 </select>
               </div>
+              <div className="form-group">
+                <label>Location (optional)</label>
+                <LocationPicker
+                  locations={presetLocations}
+                  selectedLocation={newEventLocation}
+                  onSelect={(id) => { setNewEventLocation(id); setNewEventCustomPlace(null); }}
+                  customPlace={newEventCustomPlace}
+                  onCustomPlace={(place) => { setNewEventCustomPlace(place); setNewEventLocation(null); }}
+                />
+              </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Create Event</button>
             </form>
           </div>
@@ -566,6 +602,16 @@ function AdminDashboard() {
                     <option value="public">Public</option>
                     <option value="private">Private</option>
                   </select>
+                </div>
+                <div className="form-group">
+                  <label>Location (optional)</label>
+                  <LocationPicker
+                    locations={presetLocations}
+                    selectedLocation={editingEventLocation}
+                    onSelect={(id) => { setEditingEventLocation(id); setEditingEventCustomPlace(null); }}
+                    customPlace={editingEventCustomPlace}
+                    onCustomPlace={(place) => { setEditingEventCustomPlace(place); setEditingEventLocation(null); }}
+                  />
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save</button>
@@ -611,7 +657,7 @@ function AdminDashboard() {
                   </span>
                 </div>
 
-                {selectedEvent.type === 'private' && selectedEvent.location?.address && (
+                {selectedEvent.location?.name && (
                   <>
                     <div className="detail-row">
                       <span className="detail-label">Location</span>
