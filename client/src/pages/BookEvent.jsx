@@ -15,12 +15,18 @@ function BookEvent() {
   const [clientSecret, setClientSecret] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [guests, setGuests] = useState([]);
 
   useEffect(() => {
-    api
-      .get(`/events/${eventId}`)
-      .then((res) => setEvent(res.data))
-      .catch((err) => setError("Event not found"))
+    Promise.all([
+      api.get(`/events/${eventId}`),
+      api.get(`/events/${eventId}/guests`),
+    ])
+      .then(([eventRes, guestsRes]) => {
+        setEvent(eventRes.data);
+        setGuests(guestsRes.data);
+      })
+      .catch(() => setError("Event not found"))
       .finally(() => setLoading(false));
   }, [eventId]);
 
@@ -129,6 +135,21 @@ function BookEvent() {
               src={`https://maps.google.com/maps?q=${encodeURIComponent(event.location.address || event.location.name)}&output=embed`}
             />
           </div>
+        </div>
+      )}
+
+      {guests.length > 0 && (
+        <div style={{ marginBottom: 24, background: "#1a1a2e", border: "1px solid #333", borderRadius: 8, padding: 16 }}>
+          <h3 style={{ color: "#e0e0e0", marginBottom: 12, fontSize: "1rem" }}>
+            Registered Guests ({guests.length}{event.max_capacity ? `/${event.max_capacity}` : ""})
+          </h3>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {guests.map((name, i) => (
+              <li key={i} style={{ background: "#252540", borderRadius: 20, padding: "4px 12px", color: "#c0c0d0", fontSize: "0.9rem", whiteSpace: "nowrap", flexShrink: 0 }}>
+                {name}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
