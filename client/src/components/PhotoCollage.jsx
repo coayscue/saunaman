@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import tentOutside from '../images/private_bookings/tent_outside.png';
-import tentInside from '../images/private_bookings/tent_inside.png';
+import tentOutside from '../images/private_bookings/tent_outside.jpg';
+import tentInside from '../images/private_bookings/tent_inside.jpg';
 import twoTentsSunrise from '../images/private_bookings/two_tents_sunrise.jpeg';
 import squad from '../images/private_bookings/squad.jpeg';
 
