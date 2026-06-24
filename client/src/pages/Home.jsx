@@ -18,7 +18,8 @@ function Home() {
     api.get('/events?type=public')
       .then(res => {
         const cutoff = new Date(Date.now() - 4 * 60 * 60 * 1000);
-        setEvents(res.data.filter(e => new Date(e.date) >= cutoff));
+        const filtered = res.data.filter(e => new Date(e.date) >= cutoff);
+        setEvents(filtered);
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
@@ -47,10 +48,10 @@ function Home() {
         </a>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           <Link to="/donate" style={{ textDecoration: 'none' }}>
-            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>🤝</span><span>Donate</span></button>
+            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>💵</span><span>Pay Us</span></button>
           </Link>
           <Link to="/waiver" style={{ textDecoration: 'none' }}>
-            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>📄</span><span>Sign Waiver</span></button>
+            <button className="btn btn-primary" style={{ background: '#ffffff', color: '#BA160C', border: '2px solid #BA160C', display: 'flex', alignItems: 'center', gap: 10 }}><span>📄</span><span>Sign the Waiver</span></button>
           </Link>
         </div>
       </div>
