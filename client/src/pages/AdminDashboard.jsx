@@ -22,7 +22,7 @@ function AdminDashboard() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [newEvent, setNewEvent] = useState({
-    name: '', date: '', price: '', max_capacity: '', type: 'public', duration: 90
+    name: '', date: '', endDate: '', price: '', max_capacity: '', type: 'public', duration: 90
   });
   const [presetLocations, setPresetLocations] = useState([]);
   const [newEventLocation, setNewEventLocation] = useState(null); // selected preset id
@@ -75,7 +75,7 @@ function AdminDashboard() {
     id: e._id,
     title: `${e.name} (${e.type})`,
     start: new Date(e.date),
-    end: new Date(new Date(e.date).getTime() + (e.duration || 90) * 60 * 1000),
+    end: e.endDate ? new Date(e.endDate) : new Date(new Date(e.date).getTime() + (e.duration || 90) * 60 * 1000),
     resource: e
   }));
 
@@ -88,13 +88,14 @@ function AdminDashboard() {
       await api.post('/events', {
         ...newEvent,
         date: new Date(newEvent.date).toISOString(),
+        endDate: newEvent.endDate ? new Date(newEvent.endDate).toISOString() : null,
         price: parseFloat(newEvent.price),
         max_capacity: parseInt(newEvent.max_capacity),
         duration: parseInt(newEvent.duration),
         ...(resolvedLocation ? { location: { name: resolvedLocation.name, address: resolvedLocation.address, lat: resolvedLocation.lat || null, lng: resolvedLocation.lng || null } } : {})
       });
       setShowCreateEvent(false);
-      setNewEvent({ name: '', date: '', price: '', max_capacity: '', type: 'public', duration: 90 });
+      setNewEvent({ name: '', date: '', endDate: '', price: '', max_capacity: '', type: 'public', duration: 90 });
       setNewEventLocation(null);
       setNewEventCustomPlace(null);
       loadData();
@@ -123,6 +124,7 @@ function AdminDashboard() {
     setEditingEvent({
       name: selectedEvent.name,
       date: moment(selectedEvent.date).format('YYYY-MM-DDTHH:mm'),
+      endDate: selectedEvent.endDate ? moment(selectedEvent.endDate).format('YYYY-MM-DDTHH:mm') : '',
       price: selectedEvent.price,
       max_capacity: selectedEvent.max_capacity,
       duration: selectedEvent.duration || 90,
@@ -141,6 +143,7 @@ function AdminDashboard() {
       const updated = await api.put(`/events/${selectedEvent._id}`, {
         ...editingEvent,
         date: new Date(editingEvent.date).toISOString(),
+        endDate: editingEvent.endDate ? new Date(editingEvent.endDate).toISOString() : null,
         price: parseFloat(editingEvent.price),
         max_capacity: parseInt(editingEvent.max_capacity),
         duration: parseInt(editingEvent.duration),
@@ -533,6 +536,10 @@ function AdminDashboard() {
                 <input type="datetime-local" value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} required />
               </div>
               <div className="form-group">
+                <label>End Date & Time (optional)</label>
+                <input type="datetime-local" value={newEvent.endDate} onChange={e => setNewEvent({ ...newEvent, endDate: e.target.value })} />
+              </div>
+              <div className="form-group">
                 <label>Duration (minutes)</label>
                 <input type="number" value={newEvent.duration} onChange={e => setNewEvent({ ...newEvent, duration: e.target.value })} required />
               </div>
@@ -585,6 +592,10 @@ function AdminDashboard() {
                   <input type="datetime-local" value={editingEvent.date} onChange={e => setEditingEvent({ ...editingEvent, date: e.target.value })} required />
                 </div>
                 <div className="form-group">
+                  <label>End Date & Time (optional)</label>
+                  <input type="datetime-local" value={editingEvent.endDate} onChange={e => setEditingEvent({ ...editingEvent, endDate: e.target.value })} />
+                </div>
+                <div className="form-group">
                   <label>Duration (minutes)</label>
                   <input type="number" value={editingEvent.duration} onChange={e => setEditingEvent({ ...editingEvent, duration: e.target.value })} required />
                 </div>
@@ -628,6 +639,12 @@ function AdminDashboard() {
                   <span className="detail-label">Date</span>
                   <span className="detail-value">{formatDate(selectedEvent.date)}</span>
                 </div>
+                {selectedEvent.endDate && (
+                  <div className="detail-row">
+                    <span className="detail-label">End Date</span>
+                    <span className="detail-value">{formatDate(selectedEvent.endDate)}</span>
+                  </div>
+                )}
                 <div className="detail-row">
                   <span className="detail-label">Duration</span>
                   <span className="detail-value">{selectedEvent.duration || 90} min</span>
@@ -802,6 +819,12 @@ function AdminDashboard() {
               <span className="detail-label">Date</span>
               <span className="detail-value">{formatDate(selectedReservation.event?.date)}</span>
             </div>
+            {selectedReservation.event?.endDate && (
+              <div className="detail-row">
+                <span className="detail-label">End Date</span>
+                <span className="detail-value">{formatDate(selectedReservation.event.endDate)}</span>
+              </div>
+            )}
             <div className="detail-row">
               <span className="detail-label">Type</span>
               <span className={`badge ${selectedReservation.event?.type === 'public' ? 'badge-public' : 'badge-private'}`}>
