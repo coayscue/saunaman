@@ -51,7 +51,7 @@ The client reads `VITE_STRIPE_PUBLISHABLE_KEY` and `VITE_GOOGLE_MAPS_API_KEY` fr
 
 ## Project skills
 
-- **`/prompt2pr <description>`** — implement a change, validate it end-to-end, and open a GitHub PR with a populated test plan. See [.claude/skills/prompt2pr/](.claude/skills/prompt2pr/).
+- **`/prompt-to-pr <description>`** — implement a change, validate it end-to-end, and open a GitHub PR with a populated test plan. See [.claude/skills/prompt-to-pr/](.claude/skills/prompt-to-pr/).
 - **`/validate`** — run the app, drive the UI with Playwright, instrument data flow, verify the DB, and produce a test plan. See [.claude/skills/validate/](.claude/skills/validate/).
 
 `.validation/` holds run artifacts (screenshots, logs, test plans) produced by these skills.

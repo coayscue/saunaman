@@ -1,9 +1,9 @@
 ---
-name: prompt2pr
+name: prompt-to-pr
 description: Implement a code change from a natural-language description, autonomously validate it end-to-end (run the app, drive the UI, verify data flow and the database), then open a GitHub PR with a fully populated test plan (steps, screenshots, print-statement evidence, DB before/after). Use when the user wants to "make this change and open a PR", "ship this and validate it", or "implement X, test it, and PR it".
 ---
 
-# prompt2pr
+# prompt-to-pr
 
 End-to-end: take a change request → write the code → prove it works with the `validate` skill → open a PR whose body IS the test plan.
 
