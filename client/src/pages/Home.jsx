@@ -70,6 +70,7 @@ function Home() {
             <div key={event._id} className="event-card">
               <h3>{event.name}</h3>
               <p className="date">{formatDate(event.date)}</p>
+              {event.endDate && <p className="date">Ends: {formatDate(event.endDate)}</p>}
               <p>Capacity: {event.max_capacity}</p>
               <p className="price">${event.price}</p>
               {event.booked ? (

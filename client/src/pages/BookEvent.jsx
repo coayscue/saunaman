@@ -111,6 +111,18 @@ function BookEvent() {
           hour: "2-digit",
           minute: "2-digit",
         })}
+        {event.endDate && (
+          <>
+            {" – "}
+            {new Date(event.endDate).toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </>
+        )}
       </p>
       <p style={{ color: "#10b981", fontSize: "1.2rem", marginBottom: 16 }}>
         ${event.price}

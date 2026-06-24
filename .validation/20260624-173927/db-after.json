@@ -1,0 +1,21 @@
+{
+  "collection": "events",
+  "count": 1,
+  "docs": [
+    {
+      "_id": "ef146b8f-db19-45d5-bb73-9fa73fb8af6b",
+      "name": "Validation End Date Event",
+      "date": "2026-12-15T16:00:00.000Z",
+      "endDate": "2026-12-15T18:00:00.000Z",
+      "duration": 90,
+      "price": 55,
+      "max_capacity": 10,
+      "type": "public",
+      "booked": false,
+      "tent_count": 1,
+      "createdAt": "2026-06-24T22:40:52.049Z",
+      "updatedAt": "2026-06-24T22:40:52.049Z",
+      "__v": 0
+    }
+  ]
+}

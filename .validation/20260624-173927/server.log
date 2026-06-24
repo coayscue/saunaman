@@ -1,0 +1,79 @@
+
+> saunaman@1.0.0 dev
+> concurrently "npm run server" "npm run client"
+
+[1] 
+[1] > saunaman@1.0.0 client
+[1] > cd client && npm start
+[1] 
+[0] 
+[0] > saunaman@1.0.0 server
+[0] > nodemon server/index.js
+[0] 
+[0] [33m[nodemon] 3.1.14[39m
+[0] [33m[nodemon] to restart at any time, enter `rs`[39m
+[0] [33m[nodemon] watching path(s): *.*[39m
+[0] [33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[0] [32m[nodemon] starting `node server/index.js`[39m
+[1] 
+[1] > client@0.1.0 start
+[1] > vite --host
+[1] 
+[0] [dotenv@17.3.1] injecting env (7) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[0] Connected to MongoDB
+[0] Server running on port 5001
+[1] 
+[1]   VITE v8.0.2  ready in 154 ms
+[1] 
+[1]   ➜  Local:   http://localhost:3000/
+[1]   ➜  Network: http://172.20.0.29:3000/
+[1]   ➜  Network: http://192.168.64.1:3000/
+[0] GET /api/events → 200 (11ms)
+[1] 5:40:49 PM [vite] (client) [console.warn] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+[1] 5:40:49 PM [vite] (client) [console.warn] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+[0] POST /api/admin/verify → 200 (0ms)
+[0] POST /api/admin/verify → 200 (0ms)
+[0] GET /api/private-bookings/locations → 200 (1ms)
+[0] GET /api/private-bookings/locations → 304 (0ms)
+[0] GET /api/events → 200 (7ms)
+[0] GET /api/invoices → 200 (10ms)
+[0] GET /api/users → 200 (8ms)
+[0] GET /api/donations → 200 (12ms)
+[0] GET /api/events → 304 (7ms)
+[0] GET /api/reservations → 200 (17ms)
+[0] GET /api/users → 304 (4ms)
+[0] GET /api/invoices → 304 (8ms)
+[0] GET /api/donations → 304 (6ms)
+[0] GET /api/reservations → 304 (4ms)
+[1] 5:40:49 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[1] 5:40:50 PM [vite] (client) [console.warn] As of March 1st, 2025, google.maps.places.Autocomplete is not available to new customers. Please use google.maps.places.PlaceAutocompleteElement instead. At this time, google.maps.places.Autocomplete is not scheduled to be discontinued, but google.maps.places.PlaceAutocompleteElement is recommended over google.maps.places.Autocomplete. While google.maps.places.Autocomplete will continue to receive bug fixes for any major regressions, existing bugs in google.maps.places.Autocomplete will not be addressed. At least 12 months notice will be given before support is discontinued. Please see https://developers.google.com/maps/legacy for additional details and https://developers.google.com/maps/documentation/javascript/places-migration-overview for the migration guide.
+[0] [VALIDATE-DEBUG] POST /events incoming endDate: 2026-12-15T18:00:00.000Z
+[0] [VALIDATE-DEBUG] saved event _id: ef146b8f-db19-45d5-bb73-9fa73fb8af6b endDate: 2026-12-15T18:00:00.000Z
+[0] POST /api/events → 201 (7ms)
+[0] GET /api/users → 304 (3ms)
+[0] GET /api/events → 200 (7ms)
+[0] GET /api/invoices → 304 (8ms)
+[0] GET /api/reservations → 304 (9ms)
+[0] GET /api/donations → 304 (9ms)
+[1] 5:40:52 PM [vite] (client) [console.error] Google Maps JavaScript API error: BillingNotEnabledMapError
+[1] https://developers.google.com/maps/documentation/javascript/error-messages#billing-not-enabled-map-error
+[1] 5:40:56 PM [vite] (client) [console.warn] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+[1] 5:40:56 PM [vite] (client) [console.warn] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+[0] GET /api/events?type=public → 200 (2ms)
+[0] GET /api/reviews → 200 (2ms)
+[0] GET /api/events?type=public → 304 (2ms)
+[0] GET /api/reviews → 304 (1ms)
+[1] 5:40:56 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[0] GET /uploads/reviews/3b20138e-50e5-4139-86f7-609fc48d8eff.jpg → 200 (35ms)
+[0] GET /uploads/reviews/4499409c-9c07-47fa-8a4e-f0988234592d.jpg → 200 (39ms)
+[0] GET /api/events/ef146b8f-db19-45d5-bb73-9fa73fb8af6b → 200 (3ms)
+[0] GET /api/events/ef146b8f-db19-45d5-bb73-9fa73fb8af6b/guests → 200 (2ms)
+[0] GET /api/events/ef146b8f-db19-45d5-bb73-9fa73fb8af6b/guests → 304 (1ms)
+[0] GET /api/events/ef146b8f-db19-45d5-bb73-9fa73fb8af6b → 304 (2ms)
+[0] [32m[nodemon] restarting due to changes...[39m
+[0] [32m[nodemon] starting `node server/index.js`[39m
+[1] 5:41:28 PM [vite] (client) hmr update /src/pages/AdminDashboard.jsx
+[0] [dotenv@17.3.1] injecting env (7) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+[0] Connected to MongoDB
+[0] Server running on port 5001
+[1] npm run client exited with code 143

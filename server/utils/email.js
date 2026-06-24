@@ -8,9 +8,11 @@ function formatICSDate(date) {
   return new Date(date).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 }
 
-function buildICS({ uid, summary, description, location, start, durationMinutes }) {
+function buildICS({ uid, summary, description, location, start, end, durationMinutes }) {
   const dtStart = formatICSDate(start);
-  const dtEnd = formatICSDate(new Date(new Date(start).getTime() + durationMinutes * 60000));
+  const dtEnd = end
+    ? formatICSDate(end)
+    : formatICSDate(new Date(new Date(start).getTime() + durationMinutes * 60000));
   const dtStamp = formatICSDate(new Date());
   const safeDesc = (description || "").replace(/\n/g, "\\n");
   const safeLoc = (location || "").replace(/,/g, "\\,");
@@ -52,6 +54,7 @@ async function sendBookingConfirmation(user, event, reservation) {
       description: `Sauna Man SF - ${event.type === "public" ? "Public" : "Private"} Session`,
       location: event.location?.address || event.location?.name || "",
       start: event.date,
+      end: event.endDate,
       durationMinutes: event.duration || 90,
     });
 
@@ -152,6 +155,7 @@ async function sendPrivateBookingNotification(user, event, location) {
       description: `${user.name} (${user.email}, ${user.phone || "no phone"}) — ${event.tent_count} tent(s), ${event.duration} min at ${location.name}`,
       location: location.address || location.name,
       start: event.date,
+      end: event.endDate,
       durationMinutes: event.duration || 120,
     });
 
@@ -189,6 +193,7 @@ async function sendPrivateBookingReceipt(user, event, reservation, location, pri
       description: `Private sauna booking at ${location.name}. ${event.tent_count} tent(s), up to ${event.max_capacity} people.`,
       location: location.address || location.name,
       start: event.date,
+      end: event.endDate,
       durationMinutes: event.duration || 120,
     });
 

@@ -1,0 +1,231 @@
+{
+  "collection": "events",
+  "count": 12,
+  "docs": [
+    {
+      "_id": "eb017b1c-8f53-4468-8320-1ca59bb473e9",
+      "name": "Whale Swim & Sauna",
+      "date": "2026-06-30T17:00:00.000Z",
+      "price": 25,
+      "max_capacity": 24,
+      "type": "public",
+      "booked": false,
+      "createdAt": "2026-03-23T23:22:17.747Z",
+      "updatedAt": "2026-06-09T17:16:54.867Z",
+      "__v": 0,
+      "duration": 120,
+      "location": {
+        "name": "Golden Gate Bridge Vista Point",
+        "address": "Golden Gate Bridge Vista Point, San Francisco, CA 94129, USA",
+        "lat": 37.8077876,
+        "lng": -122.4752007
+      }
+    },
+    {
+      "_id": "42dddf00-4024-483d-b409-088b1db26746",
+      "name": "Private Sauna - Christian Ayscue",
+      "date": "2026-06-18T02:00:00.000Z",
+      "duration": 120,
+      "price": 450,
+      "max_capacity": 12,
+      "type": "private",
+      "booked": true,
+      "tent_count": 1,
+      "location": {
+        "name": "Crissy Field",
+        "address": "Crissy Field, San Francisco, CA 94129",
+        "lat": 37.806639,
+        "lng": -122.448406
+      },
+      "createdAt": "2026-06-02T04:11:56.067Z",
+      "updatedAt": "2026-06-02T04:11:56.067Z",
+      "__v": 0
+    },
+    {
+      "_id": "986c05ec-3e5b-49fe-8b40-5ac88c8624b1",
+      "name": "Private Sauna - christian ayscue",
+      "date": "2026-04-16T10:00:00.000Z",
+      "duration": 180,
+      "price": 675,
+      "max_capacity": 12,
+      "type": "private",
+      "booked": true,
+      "tent_count": 1,
+      "location": {
+        "name": "China Beach",
+        "address": "China Beach, San Francisco, CA 94121",
+        "lat": 37.7878,
+        "lng": -122.491
+      },
+      "createdAt": "2026-04-12T01:43:26.599Z",
+      "updatedAt": "2026-04-12T01:43:26.599Z",
+      "__v": 0
+    },
+    {
+      "_id": "91ea3772-e284-4726-bbd0-7a3d423b5b0a",
+      "name": "Private Sauna - Try me",
+      "date": "2026-04-08T09:00:00.000Z",
+      "duration": 240,
+      "price": 900,
+      "max_capacity": 12,
+      "type": "private",
+      "booked": true,
+      "tent_count": 1,
+      "location": {
+        "name": "Ocean Beach",
+        "address": "Ocean Beach, San Francisco, CA 94122",
+        "lat": 37.776163,
+        "lng": -122.511923
+      },
+      "createdAt": "2026-03-31T23:47:47.554Z",
+      "updatedAt": "2026-03-31T23:47:47.554Z",
+      "__v": 0
+    },
+    {
+      "_id": "ea9afdb4-06fb-491c-b361-6e1a7cbde61c",
+      "name": "Private Sauna - Christian Ayscue",
+      "date": "2026-04-04T02:00:00.000Z",
+      "duration": 120,
+      "price": 450,
+      "max_capacity": 12,
+      "type": "private",
+      "booked": true,
+      "tent_count": 1,
+      "location": {
+        "name": "China Beach",
+        "address": "China Beach, San Francisco, CA 94121",
+        "lat": 37.7878,
+        "lng": -122.491
+      },
+      "createdAt": "2026-03-31T23:45:19.461Z",
+      "updatedAt": "2026-03-31T23:45:19.461Z",
+      "__v": 0
+    },
+    {
+      "_id": "aa74f17d-d57d-40e6-91cd-a869d3e51d35",
+      "name": "Private Sauna - Try it",
+      "date": "2026-04-09T10:00:00.000Z",
+      "duration": 120,
+      "price": 700,
+      "max_capacity": 24,
+      "type": "private",
+      "booked": true,
+      "tent_count": 2,
+      "location": {
+        "name": "China Beach",
+        "address": "China Beach, San Francisco, CA 94121",
+        "lat": 37.7878,
+        "lng": -122.491
+      },
+      "createdAt": "2026-03-31T12:31:35.013Z",
+      "updatedAt": "2026-03-31T12:31:35.013Z",
+      "__v": 0
+    },
+    {
+      "_id": "261e89f0-d728-485f-bc13-9d3508bb0125",
+      "name": "Private Sauna - Help Me",
+      "date": "2026-04-03T09:00:00.000Z",
+      "duration": 240,
+      "price": 1400,
+      "max_capacity": 24,
+      "type": "private",
+      "booked": true,
+      "tent_count": 2,
+      "location": {
+        "name": "San Francisco Running Company",
+        "address": "247 Shoreline Hwy, Mill Valley, CA 94941, USA",
+        "lat": null,
+        "lng": null
+      },
+      "createdAt": "2026-03-31T12:17:47.593Z",
+      "updatedAt": "2026-03-31T12:17:47.593Z",
+      "__v": 0
+    },
+    {
+      "_id": "7307335e-a5f4-406d-b508-3ed82a4dcbd3",
+      "name": "Private Sauna - John Doe",
+      "date": "2026-04-02T10:00:00.000Z",
+      "duration": 120,
+      "price": 400,
+      "max_capacity": 12,
+      "type": "private",
+      "booked": true,
+      "tent_count": 1,
+      "location": {
+        "name": "247 Shoreline Hwy, Mill Valley, CA 94941, USA",
+        "address": "247 Shoreline Hwy, Mill Valley, CA 94941, USA",
+        "lat": null,
+        "lng": null
+      },
+      "createdAt": "2026-03-31T12:08:33.785Z",
+      "updatedAt": "2026-03-31T12:08:33.785Z",
+      "__v": 0
+    },
+    {
+      "_id": "c0cd1bbd-9d6a-4f81-8047-2008cd2e20f4",
+      "name": "Private Sauna - Christian Ayscue",
+      "date": "2026-04-02T00:00:00.000Z",
+      "duration": 120,
+      "price": 400,
+      "max_capacity": 12,
+      "type": "private",
+      "booked": true,
+      "tent_count": 1,
+      "location": {
+        "name": "China Beach",
+        "address": "China Beach, San Francisco, CA 94121",
+        "lat": 37.7878,
+        "lng": -122.491
+      },
+      "createdAt": "2026-03-30T20:13:51.940Z",
+      "updatedAt": "2026-03-30T20:13:51.940Z",
+      "__v": 0
+    },
+    {
+      "_id": "f49ef358-ae52-4f59-9c2f-9516c51beb96",
+      "name": "Private Sauna - Christian Ayscue",
+      "date": "2026-04-07T00:00:00.000Z",
+      "duration": 120,
+      "price": 400,
+      "max_capacity": 12,
+      "type": "private",
+      "booked": true,
+      "tent_count": 1,
+      "location": {
+        "name": "Ocean Beach",
+        "address": "Ocean Beach, San Francisco, CA 94122",
+        "lat": 37.776163,
+        "lng": -122.511923
+      },
+      "createdAt": "2026-03-30T19:21:53.937Z",
+      "updatedAt": "2026-03-30T19:21:53.937Z",
+      "__v": 0
+    },
+    {
+      "_id": "9a738763-ed95-4109-ac71-1492a0d40f98",
+      "name": "Private Sauna Event (2 Saunas)",
+      "date": "2026-03-28T17:00:00.000Z",
+      "duration": 90,
+      "price": 2,
+      "max_capacity": 24,
+      "type": "private",
+      "booked": false,
+      "createdAt": "2026-03-24T19:56:09.870Z",
+      "updatedAt": "2026-03-24T19:56:51.840Z",
+      "__v": 0
+    },
+    {
+      "_id": "016ab91d-8eb8-4ec4-97f4-f5d3ac7e4263",
+      "name": "Whale Swim & Sauna",
+      "date": "2026-03-26T00:45:00.000Z",
+      "price": 5,
+      "max_capacity": 24,
+      "type": "public",
+      "booked": false,
+      "createdAt": "2026-03-23T23:09:51.270Z",
+      "updatedAt": "2026-03-24T19:34:08.119Z",
+      "__v": 0,
+      "duration": 90
+    }
+  ]
+}

@@ -137,6 +137,9 @@ function LeaveReview() {
   const eventDate = reservation?.event ? new Date(reservation.event.date).toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
   }) : '';
+  const eventEndDate = reservation?.event?.endDate ? new Date(reservation.event.endDate).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+  }) : '';
 
   return (
     <div className="booking-container">
@@ -145,7 +148,7 @@ function LeaveReview() {
       <h1>How Was Your Experience?</h1>
       {reservation?.event && (
         <p style={{ color: '#6b7280', marginBottom: 24 }}>
-          {reservation.event.name} &mdash; {eventDate}
+          {reservation.event.name} &mdash; {eventDate}{eventEndDate && eventEndDate !== eventDate ? ` – ${eventEndDate}` : ''}
         </p>
       )}
 

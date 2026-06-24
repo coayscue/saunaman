@@ -47,6 +47,9 @@ function CancelReservation() {
           {new Date(event.date).toLocaleDateString('en-US', {
             weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
           })}
+          {event.endDate && ` – ${new Date(event.endDate).toLocaleDateString('en-US', {
+            weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          })}`}
         </p>
         <p style={{ color: '#aaa', marginTop: 8 }}>Type: {event.type === 'public' ? 'Public Session' : 'Private Session'}</p>
       </div>

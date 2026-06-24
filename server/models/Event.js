@@ -6,6 +6,7 @@ const eventSchema = new mongoose.Schema(
     _id: { type: String, default: uuidv4 },
     name: { type: String, required: true },
     date: { type: Date, required: true },
+    endDate: { type: Date },
     duration: { type: Number, default: 120 },
     price: { type: Number, required: true },
     max_capacity: { type: Number, required: true },
