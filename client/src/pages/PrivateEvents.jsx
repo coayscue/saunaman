@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import StripePaymentForm from '../components/StripePaymentForm';
@@ -77,18 +78,17 @@ function ReviewsSection() {
 
 function generateTimeSlots(date, duration = 2) {
   if (!date) return [];
-  const d = new Date(date);
-  const day = d.getDay(); // 0=Sun, 6=Sat
+  const d = DateTime.fromISO(date, { zone: 'America/Los_Angeles' });
+  const day = d.weekday % 7; // 0=Sun, 6=Sat
   const isWeekend = day === 0 || day === 6;
   const startHour = isWeekend ? 9 : 17;
   const endHour = isWeekend ? 20 : 21;
 
   const slots = [];
   for (let h = startHour; h <= endHour - duration; h++) {
-    const slotDate = new Date(d);
-    slotDate.setHours(h, 0, 0, 0);
-    const endDate = new Date(slotDate);
-    endDate.setHours(h + duration);
+    const start = d.startOf('day').set({ hour: h });
+    const slotDate = start.toJSDate();
+    const endDate = start.plus({ hours: duration }).toJSDate();
     slots.push({
       start: slotDate,
       end: endDate,
@@ -106,23 +106,16 @@ function formatTime(hour) {
 
 const MIN_ADVANCE_HOURS = 36;
 
-function CalendarPicker({ selectedDate, onDateChange, selectedSlot, onSlotChange, bookedSlots, duration }) {
-  const [currentMonth, setCurrentMonth] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
+function CalendarPicker({ selectedDate, onDateChange, selectedSlot, onSlotChange, bookedSlots, duration, currentMonth, setCurrentMonth, availabilityReady }) {
 
   const now = new Date();
   const earliestBookable = new Date(now.getTime() + MIN_ADVANCE_HOURS * 60 * 60 * 1000);
 
   // A day is disabled if even its latest possible slot (6 PM start) is within 36 hours
   const isDayDisabled = (date) => {
-    const day = date.getDay();
-    const isWeekend = day === 0 || day === 6;
-    const lastSlotHour = isWeekend ? 18 : 19; // last 2hr slot starts at 6PM/7PM
-    const latestSlotOnDay = new Date(date);
-    latestSlotOnDay.setHours(lastSlotHour, 0, 0, 0);
-    return latestSlotOnDay <= earliestBookable;
+    if (!availabilityReady) return true;
+    const day = DateTime.fromJSDate(date).toISODate();
+    return !generateTimeSlots(day, duration).some(slot => !isSlotTooSoon(slot) && !isSlotBooked(slot));
   };
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
@@ -165,7 +158,7 @@ function CalendarPicker({ selectedDate, onDateChange, selectedSlot, onSlotChange
           const day = i + 1;
           const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
           const disabled = isDayDisabled(date);
-          const isSelected = selectedDate && date.toDateString() === new Date(selectedDate).toDateString();
+          const isSelected = selectedDate && date.toDateString() === DateTime.fromISO(selectedDate).toJSDate().toDateString();
 
           return (
             <button
@@ -174,7 +167,7 @@ function CalendarPicker({ selectedDate, onDateChange, selectedSlot, onSlotChange
               className={`cal-day ${disabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`}
               disabled={disabled}
               onClick={() => {
-                onDateChange(date.toISOString());
+                onDateChange(DateTime.fromJSDate(date).toISODate());
                 onSlotChange(null);
               }}
             >
@@ -194,7 +187,7 @@ function CalendarPicker({ selectedDate, onDateChange, selectedSlot, onSlotChange
               {timeSlots.map((slot, i) => {
                 const booked = isSlotBooked(slot);
                 const tooSoon = isSlotTooSoon(slot);
-                const unavailable = booked || tooSoon;
+                const unavailable = !availabilityReady || booked || tooSoon;
                 const isSelected = selectedSlot && slot.start.getTime() === new Date(selectedSlot).getTime();
                 return (
                   <button
@@ -217,6 +210,14 @@ function CalendarPicker({ selectedDate, onDateChange, selectedSlot, onSlotChange
 }
 
 function PrivateEvents() {
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = DateTime.now().setZone('America/Los_Angeles');
+    return new Date(now.year, now.month - 1, 1);
+  });
+  const [availabilityMonth, setAvailabilityMonth] = useState('');
+  const [availabilityError, setAvailabilityError] = useState('');
+  const monthKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth()}`;
+  const availabilityReady = availabilityMonth === monthKey && !availabilityError;
   const [tentCount, setTentCount] = useState(1);
   const [duration, setDuration] = useState(2); // 2 or 4 hours
   const [selectedDate, setSelectedDate] = useState(null);
@@ -228,6 +229,8 @@ function PrivateEvents() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [requestConfirmed, setRequestConfirmed] = useState(false);
+  const [requestId, setRequestId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
   const [error, setError] = useState('');
   const [step, setStep] = useState('form'); // form, payment, success
@@ -256,30 +259,41 @@ function PrivateEvents() {
       .catch(() => {});
   }, [selectedDate]);
 
-  // Fetch booked slots when month/date changes
+  // Fetch before selecting a day; ignore responses from previously viewed months.
   useEffect(() => {
-    if (!selectedDate) return;
-    const d = new Date(selectedDate);
-    const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
-    const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).toISOString();
-    api.get(`/private-bookings/booked-slots?start=${start}&end=${end}`)
-      .then(res => setBookedSlots(res.data))
-      .catch(() => {});
-  }, [selectedDate]);
+    let active = true;
+    setAvailabilityError('');
+    setAvailabilityMonth('');
+    setSelectedDate(null);
+    setSelectedSlot(null);
+    const start = DateTime.fromObject({ year: currentMonth.getFullYear(), month: currentMonth.getMonth() + 1, day: 1 }, { zone: 'America/Los_Angeles' });
+    api.get('/private-bookings/booked-slots', { params: { start: start.toUTC().toISO(), end: start.plus({ months: 1 }).toUTC().toISO() } })
+      .then(({ data }) => { if (active) { setBookedSlots(data); setAvailabilityMonth(monthKey); } })
+      .catch(() => { if (active) setAvailabilityError('Availability temporarily unavailable. Refresh this page to try again.'); });
+    return () => { active = false; };
+  }, [currentMonth, monthKey]);
+
+  useEffect(() => { setSelectedSlot(null); }, [duration]);
 
   const basePrice = tentCount === 2 ? 700 : 450;
   const price = duration === 4 ? basePrice * 2 : duration === 3 ? Math.round(basePrice * 1.5) : basePrice;
   const capacity = tentCount === 2 ? 24 : 12;
 
   const hasLocation = selectedLocation || customPlace;
-  const isFormValid = name && phone && email && selectedDate && selectedSlot && hasLocation && waiverAccepted;
+  const isFormValid = availabilityReady && name && phone && email && selectedDate && selectedSlot && hasLocation && waiverAccepted;
 
   const handleProceedToPayment = async () => {
     if (!isFormValid) return;
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/private-bookings/create-intent', { tentCount, duration });
+      const res = await api.post('/private-booking-requests', {
+        tentCount, duration, date: selectedSlot, name, email, phone, waiverAccepted,
+        locationId: selectedLocation || undefined,
+        customLocation: !selectedLocation ? customPlace?.address : undefined,
+        customLocationName: !selectedLocation ? customPlace?.name : undefined,
+      });
+      setRequestId(res.data.requestId);
       setClientSecret(res.data.clientSecret);
       setStep('payment');
     } catch (err) {
@@ -292,18 +306,8 @@ function PrivateEvents() {
   const handlePaymentSuccess = async (stripePaymentId) => {
     setError('');
     try {
-      await api.post('/private-bookings/book', {
-        name,
-        email,
-        phone,
-        tentCount,
-        duration,
-        locationId: selectedLocation || undefined,
-        customLocation: !selectedLocation && customPlace ? customPlace.address : undefined,
-        customLocationName: !selectedLocation && customPlace ? customPlace.name : undefined,
-        date: selectedSlot,
-        stripePaymentId,
-      });
+      const { data } = await api.post(`/private-booking-requests/${requestId}/submitted`, { paymentIntentId: stripePaymentId });
+      setRequestConfirmed(data.status === 'confirmed');
       setStep('success');
     } catch (err) {
       const msg = err.response?.data?.error || 'Error completing booking';
@@ -316,13 +320,9 @@ function PrivateEvents() {
     return (
       <div className="booking-container">
         <div className="success-message">
-          <h2>Booking Confirmed!</h2>
-          <p style={{ marginTop: 16, color: '#6b7280' }}>
-            A confirmation receipt has been sent to <strong style={{ color: '#1a1a1a' }}>{email}</strong>.
-          </p>
-          <p style={{ marginTop: 8, color: '#6b7280' }}>
-            You can cancel your reservation from the link in the email.
-          </p>
+          <h2>{requestConfirmed ? 'Booking confirmed' : 'Booking request submitted'}</h2>
+          <p>{requestConfirmed ? 'Your booking has been approved. A confirmation email will follow.' : 'Your timeslot and booking is under review we will get back to you shortly'}</p>
+          <p>{requestConfirmed ? 'Payment has completed.' : 'Your card has been authorized. Payment will be collected only after approval.'}</p>
           <Link to="/" className="btn btn-primary" style={{ display: 'inline-block', marginTop: 24, textDecoration: 'none' }}>
             Back Home
           </Link>
@@ -441,7 +441,12 @@ function PrivateEvents() {
             <p style={{ color: '#9ca3af', fontSize: '0.85rem', marginBottom: 12 }}>
               Sat & Sun: 9 AM - 8 PM | Weekdays: 5 PM - 9 PM (2-hour slots)
             </p>
+            {availabilityError ? <p role="alert">{availabilityError}</p> : !availabilityReady && <p>Checking availability…</p>}
+            <p>All booking times are San Francisco time.</p>
             <CalendarPicker
+              currentMonth={currentMonth}
+              setCurrentMonth={setCurrentMonth}
+              availabilityReady={availabilityReady}
               selectedDate={selectedDate}
               onDateChange={setSelectedDate}
               selectedSlot={selectedSlot}
@@ -547,7 +552,7 @@ function PrivateEvents() {
             disabled={!isFormValid || loading}
             onClick={handleProceedToPayment}
           >
-            {loading ? 'Setting up payment...' : `Proceed to Payment - $${price}`}
+            {loading ? 'Setting up payment...' : `Request booking - $${price}`}
           </button>
         </>
       )}
@@ -601,7 +606,8 @@ function PrivateEvents() {
             </div>
           </div>
           {error && <p style={{ color: '#dc2626', marginBottom: 16 }}>{error}</p>}
-          <StripePaymentForm clientSecret={clientSecret} onSuccess={handlePaymentSuccess} onError={setError} />
+          <p>Your card will be authorized now. Payment is collected only after approval. Unanswered requests expire within 24 hours.</p>
+          <StripePaymentForm authorizeOnly buttonLabel="Authorize payment and request booking" clientSecret={clientSecret} onSuccess={handlePaymentSuccess} onError={setError} />
           <button
             type="button"
             className="btn btn-secondary"

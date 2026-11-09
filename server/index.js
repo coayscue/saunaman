@@ -9,6 +9,7 @@ const app = express();
 const path = require("path");
 
 app.use(cors());
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), require('./routes/bookingRequests').webhook);
 app.use(express.json());
 
 // Request logger
@@ -22,7 +23,7 @@ app.use((req, res, next) => {
   };
   res.on("finish", () => {
     const ms = Date.now() - start;
-    const line = `${req.method} ${req.originalUrl} → ${res.statusCode} (${ms}ms)`;
+    const line = `${req.method} ${req.path} → ${res.statusCode} (${ms}ms)`;
     if (res.statusCode >= 400) {
       console.error(line, responseBody ? JSON.stringify(responseBody) : "");
     } else {
@@ -39,15 +40,17 @@ app.use(
 );
 
 // Admin session tokens (in-memory)
-const adminTokens = new Set();
+const adminTokens = new Map();
 
 // Admin path verification — issues a token on success
 const ADMIN_PATH = process.env.ADMIN_PATH || "/admin-secret-dashboard-254";
 app.post("/api/admin/verify", (req, res) => {
-  const valid = req.body.path === ADMIN_PATH;
+  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) return res.status(503).json({ error: 'Configure ADMIN_PASSWORD before enabling administrator access' });
+  if (req.body.path === ADMIN_PATH && process.env.ADMIN_PASSWORD && !req.body.password) return res.json({ valid: false, requiresPassword: true });
+  const valid = req.body.path === ADMIN_PATH && (!process.env.ADMIN_PASSWORD || (typeof req.body.password === 'string' && require('crypto').timingSafeEqual(require('crypto').createHash('sha256').update(req.body.password).digest(), require('crypto').createHash('sha256').update(process.env.ADMIN_PASSWORD).digest())));
   if (valid) {
     const token = uuidv4();
-    adminTokens.add(token);
+    adminTokens.set(token, Date.now() + 8 * 3600000);
     return res.json({ valid: true, token });
   }
   res.json({ valid: false });
@@ -56,11 +59,14 @@ app.post("/api/admin/verify", (req, res) => {
 // Admin auth middleware
 function requireAdmin(req, res, next) {
   const token = req.headers["x-admin-token"];
-  if (!token || !adminTokens.has(token)) {
+  if (!token || (adminTokens.get(token) || 0) < Date.now()) {
     return res.status(403).json({ error: "Unauthorized" });
   }
   next();
 }
+
+app.use("/api/private-booking-requests", require("./routes/bookingRequests")(requireAdmin));
+app.use("/api/google-calendar", require("./routes/googleCalendar")(requireAdmin));
 
 // Public routes (customer-facing)
 app.use("/api/events", require("./routes/events").publicRouter);
@@ -71,6 +77,8 @@ app.use("/api/private-bookings", require("./routes/privateBookings"));
 app.use("/api/reviews", require("./routes/reviews"));
 app.use("/api/donations", require("./routes/donations").publicRouter);
 app.use("/api/invoices", require("./routes/invoices").publicRouter);
+
+app.use("/api/admin/events", requireAdmin, require("./routes/events").adminRouter);
 
 // Admin routes (require token)
 app.use("/api/events", requireAdmin, require("./routes/events").adminRouter);
@@ -147,6 +155,16 @@ mongoose
   .then(() => {
     console.log("Connected to MongoDB");
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+    const calendarSync = require('./utils/calendarSync').service();
+    calendarSync.tick();
+    setInterval(() => calendarSync.tick(), 60000);
+    const cancellationWorker = require('./utils/eventCancellation').service();
+    cancellationWorker.tick();
+    setInterval(() => cancellationWorker.tick(), 30000);
+    const requestWorker = require('./utils/bookingRequests');
+    requestWorker.tick();
+    setInterval(() => requestWorker.tick(), 30000);
 
     // Check for pending review emails every 60 minutes
     setInterval(sendPendingReviewEmails, 60 * 60 * 1000);

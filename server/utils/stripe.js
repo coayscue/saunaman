@@ -1,4 +1,4 @@
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY, { timeout: 20000, maxNetworkRetries: 1 });
 
 async function createPaymentIntent(amountInDollars) {
   const paymentIntent = await stripe.paymentIntents.create({

@@ -1,0 +1,5 @@
+Card number	4242 4242 4242 4242
+Expiration	12/30
+CVC	        123
+ZIP code	94101
+Cardholder name	Test Customer

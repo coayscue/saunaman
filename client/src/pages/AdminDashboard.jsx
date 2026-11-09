@@ -10,6 +10,32 @@ const localizer = momentLocalizer(moment);
 
 function AdminDashboard() {
   const location = useLocation();
+  const [syncMessage, setSyncMessage] = useState('');
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [calendarStatus, setCalendarStatus] = useState('Checking connection…');
+  const refreshCalendar = () => api.get('/google-calendar/status').then(({ data }) => setCalendarStatus(data.status)).catch(() => setCalendarStatus('unavailable'));
+  useEffect(() => { refreshCalendar(); }, []);
+  const connectCalendar = async () => {
+    try {
+      const { data } = await api.post('/google-calendar/connect');
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+    } catch (err) { setCalendarStatus(err.response?.data?.error || 'Unable to connect'); }
+  };
+  const [bookingRequests, setBookingRequests] = useState([]);
+  const [requestError, setRequestError] = useState('');
+  const [deciding, setDeciding] = useState('');
+  const refreshRequests = async () => {
+    try { const { data } = await api.get('/private-booking-requests'); setBookingRequests(data); setRequestError(''); }
+    catch { setRequestError('Unable to load booking requests'); }
+  };
+  useEffect(() => { refreshRequests(); const timer = setInterval(refreshRequests, 15000); return () => clearInterval(timer); }, []);
+  const decideRequest = async (id, decision) => {
+    if (!window.confirm(decision === 'approve' ? 'Approve this request and capture payment?' : 'Deny this request and release the full authorization or refund the full captured payment?')) return;
+    setDeciding(id);
+    try { await api.post(`/private-booking-requests/${id}/${decision}`); await refreshRequests(); await loadData(); }
+    catch (err) { setRequestError(err.response?.data?.error || 'Unable to process decision'); }
+    finally { setDeciding(''); }
+  };
   const [tab, setTab] = useState('agenda');
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
@@ -38,13 +64,14 @@ function AdminDashboard() {
   const loadData = useCallback(async () => {
     try {
       const [eventsRes, usersRes, reservationsRes, donationsRes, invoicesRes] = await Promise.all([
-        api.get('/events'),
+        api.get('/admin/events'),
         api.get('/users'),
         api.get('/reservations'),
         api.get('/donations'),
         api.get('/invoices')
       ]);
       setEvents(eventsRes.data);
+      setSelectedEvent(previous => previous ? eventsRes.data.find(event => event._id === previous._id) || null : null);
       setUsers(usersRes.data);
       setReservations(reservationsRes.data);
       setDonations(donationsRes.data);
@@ -73,11 +100,28 @@ function AdminDashboard() {
 
   const calendarEvents = events.map(e => ({
     id: e._id,
-    title: `${e.name} (${e.type})`,
+    title: `${e.cancellationState === 'cancelled' ? '[Cancelled] ' : e.cancellationState === 'cancelling' ? '[Cancelling] ' : ''}${e.name} (${e.type})`,
     start: new Date(e.date),
     end: new Date(new Date(e.date).getTime() + (e.duration || 90) * 60 * 1000),
     resource: e
   }));
+
+  const syncCalendar = async (eventId, source) => {
+    if(source && !window.confirm(`Keep the ${source === 'google' ? 'Google' : 'website'} version? Customers will be notified if schedule or location changes.`)) return;
+    setSyncBusy(true);
+    try {
+      if(eventId) {
+        const {data}=await api.post(`/admin/events/${eventId}/sync`,{source});
+        setSelectedEvent(data);setSyncMessage(data.syncError || `Event sync: ${data.syncStatus}`);
+      } else {
+        const {data}=await api.post('/google-calendar/sync');
+        setSyncMessage(data.error || (data.lastSyncedAt ? `Last synchronized: ${new Date(data.lastSyncedAt).toLocaleString()}` : 'Sync is running or the calendar needs connection.'));
+      }
+      await loadData();
+    } catch(err) {setSyncMessage(err.response?.data?.error || 'Unable to synchronize');}
+    finally {setSyncBusy(false);}
+  };
+  useEffect(() => { const timer=setInterval(loadData,60000); return () => clearInterval(timer); },[loadData]);
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
@@ -158,15 +202,18 @@ function AdminDashboard() {
     }
   };
 
-  const handleDeleteEvent = async (eventId) => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
+  const [eventActionBusy, setEventActionBusy] = useState(false);
+  const handleEventAction = async (eventId, remove = false) => {
+    if (!window.confirm(`${remove ? 'Delete' : 'Cancel'} this event? All collected payments will be fully refunded and customers notified. Credit bookings get their credit back. ${remove ? 'The event will be removed from the active dashboard; payment history is retained.' : 'The event remains visible as cancelled.'}`)) return;
+    setEventActionBusy(true);
     try {
-      await api.delete(`/events/${eventId}`);
-      setSelectedEvent(null);
-      loadData();
-    } catch (err) {
-      alert(err.response?.data?.error || 'Error deleting event');
-    }
+      const { data } = remove ? await api.delete(`/events/${eventId}`) : await api.post(`/events/${eventId}/cancel`);
+      if (data.cancellationError) alert(data.cancellationError);
+      setSelectedEvent(data.deletedAt ? null : data);
+      setSelectedEventReservations([]);
+      await loadData();
+    } catch (err) { alert(err.response?.data?.error || 'Unable to cancel event'); }
+    finally { setEventActionBusy(false); }
   };
 
   const handleUserClick = async (userId) => {
@@ -196,7 +243,44 @@ function AdminDashboard() {
 
   return (
     <div>
+      <section style={{ marginBottom: 20 }}>
+        <h2>Google Calendar availability</h2>
+        <p>Connection: {calendarStatus}</p>
+        <button className="btn btn-primary" onClick={connectCalendar}>Connect / reconnect Google Calendar</button>{' '}
+        <button className="btn" onClick={refreshCalendar}>Check connection</button>{' '}
+        <button className="btn" onClick={async () => { if (window.confirm('Disconnect website availability? Private checkout will be unavailable.')) { await api.post('/google-calendar/disconnect'); refreshCalendar(); } }}>Disconnect</button>
+        <p>Linked events synchronize every minute. Reconnect Google Calendar if event permissions are missing.</p>
+        <button className="btn" disabled={syncBusy} onClick={() => syncCalendar()}>{syncBusy ? 'Synchronizing…' : 'Sync now and refresh events'}</button>
+        {syncMessage && <p role="status">{syncMessage}</p>}
+      </section>
       <h1>Admin Dashboard</h1>
+      <section>
+        <h2>Booking requests</h2>
+        {requestError && <p role="alert">{requestError}</p>}
+        <button className="btn" onClick={refreshRequests}>Refresh requests</button>
+        {bookingRequests.length === 0 && <p>No booking requests yet.</p>}
+        {bookingRequests.map(request => <div key={request._id} style={{ border: '1px solid #999', padding: 16, margin: '12px 0', background: new URLSearchParams(location.search).get('request') === request._id ? '#fff3cd' : undefined }}>
+          <strong>{request.customer.name} — {request.eventDeleted ? 'deleted' : ['cancelled', 'cancelling'].includes(request.eventCancellationState) ? request.eventCancellationState : request.status}</strong>
+          <p>{request.autoApproved && <strong>Test card auto-approved. </strong>}{request.customer.email} | {request.customer.phone}</p>
+          <p>{new Date(request.start).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} San Francisco time — {request.duration} hours, {request.tentCount} tent(s)</p>
+          <p>{request.location.name} — {request.location.address} | ${(request.amountCents / 100).toFixed(2)}</p>
+          <p>Respond by {new Date(request.deadline).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} San Francisco time</p>
+          {request.lastError && <p role="alert">{request.lastError}</p>}
+          {request.status === 'confirmed' && !request.eventDeleted && !['cancelled', 'cancelling'].includes(request.eventCancellationState) && <button className="btn btn-danger" onClick={async () => {
+            try {
+              const { data } = await api.get('/admin/events');
+              setEvents(data);
+              const event = data.find(e => e._id === request._id);
+              if (event) { setSelectedEvent(event); setSelectedEventReservations(reservations.filter(r => r.event?._id === event._id && !r.cancelled)); }
+              else setRequestError('Event is no longer active. Refresh requests.');
+            } catch { setRequestError('Unable to load event'); }
+          }}>Open event to cancel</button>}
+          {request.status === 'pending' && <>
+            <button className="btn btn-primary" disabled={!!deciding} onClick={() => decideRequest(request._id, 'approve')}>Approve and collect payment</button>{' '}
+            <button className="btn btn-danger" disabled={!!deciding} onClick={() => decideRequest(request._id, 'deny')}>Deny and release payment hold</button>
+          </>}
+        </div>)}
+      </section>
 
       <div className="admin-tabs">
         <button className={`admin-tab ${tab === 'agenda' ? 'active' : ''}`} onClick={() => setTab('agenda')}>
@@ -255,7 +339,7 @@ function AdminDashboard() {
                     >
                       <td style={{ padding: '10px 12px' }}>{moment(e.date).format('MMM D, YYYY')}</td>
                       <td style={{ padding: '10px 12px' }}>{moment(e.date).format('h:mm A')}</td>
-                      <td style={{ padding: '10px 12px', fontWeight: 500 }}>{e.name}</td>
+                      <td style={{ padding: '10px 12px', fontWeight: 500 }}>{e.name}{e.cancellationState === 'cancelled' ? ' — Cancelled' : e.cancellationState === 'cancelling' ? ' — Cancelling' : ''}</td>
                       <td style={{ padding: '10px 12px' }}>
                         <span className={`badge ${e.type === 'public' ? 'badge-public' : 'badge-private'}`}>{e.type}</span>
                       </td>
@@ -653,7 +737,7 @@ function AdminDashboard() {
                 <div className="detail-row">
                   <span className="detail-label">Status</span>
                   <span className={`badge ${selectedEvent.booked ? 'badge-cancelled' : 'badge-active'}`}>
-                    {selectedEvent.booked ? 'Booked' : 'Available'}
+                    {selectedEvent.cancellationState === 'cancelled' ? 'Cancelled' : selectedEvent.cancellationState === 'cancelling' ? 'Cancelling' : selectedEvent.booked ? 'Booked' : 'Available'}
                   </span>
                 </div>
 
@@ -680,7 +764,19 @@ function AdminDashboard() {
                   </>
                 )}
 
-                <button className="btn btn-primary" style={{ width: '100%', marginTop: 16 }} onClick={handleEditEvent}>
+                <section>
+                  <h3>Google Calendar synchronization</h3>
+                  <p>Status: {selectedEvent.syncStatus || 'unlinked'}</p>
+                  {selectedEvent.syncError && <p role="alert">{selectedEvent.syncError}</p>}
+                  {!['cancelling','cancelled'].includes(selectedEvent.cancellationState) && <>
+                    <button className="btn" disabled={syncBusy} onClick={() => syncCalendar(selectedEvent._id)}>{selectedEvent.syncEnabled ? 'Retry event sync' : 'Connect this event to Google'}</button>
+                    {selectedEvent.syncStatus === 'conflict' && <>
+                      <button className="btn" disabled={syncBusy} onClick={() => syncCalendar(selectedEvent._id,'website')}>Keep website version</button>
+                      <button className="btn" disabled={syncBusy} onClick={() => syncCalendar(selectedEvent._id,'google')}>Keep Google version</button>
+                    </>}
+                  </>}
+                </section>
+                <button className="btn btn-primary" style={{ width: '100%', marginTop: 16 }} disabled={eventActionBusy || ['cancelling','cancelled'].includes(selectedEvent.cancellationState)} onClick={handleEditEvent}>
                   Edit Event
                 </button>
 
@@ -701,15 +797,12 @@ function AdminDashboard() {
                   </>
                 )}
 
-                {selectedEventReservations.length === 0 && (
-                  <button
-                    className="btn btn-danger"
-                    style={{ width: '100%', marginTop: 8 }}
-                    onClick={() => handleDeleteEvent(selectedEvent._id)}
-                  >
-                    Delete Event
-                  </button>
-                )}
+                {selectedEvent.cancellationError && <p role="alert">{selectedEvent.cancellationError}</p>}
+                <button className="btn btn-danger" style={{ width: '100%', marginTop: 8 }} disabled={eventActionBusy || (selectedEvent.cancellationState === 'cancelled' && !selectedEvent.cancellationError)} onClick={() => handleEventAction(selectedEvent._id)}>
+                  {eventActionBusy ? 'Processing…' : selectedEvent.cancellationState === 'cancelling' || selectedEvent.cancellationError ? 'Retry cancellation' : 'Cancel Event — full refund'}
+                </button>
+                <button className="btn btn-danger" style={{ width: '100%', marginTop: 8 }} disabled={eventActionBusy} onClick={() => handleEventAction(selectedEvent._id, true)}>Delete Event — full refund</button>
+
               </>
             )}
           </div>

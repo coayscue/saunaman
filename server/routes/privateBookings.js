@@ -1,14 +1,7 @@
+const { DateTime } = require("luxon");
+const { busy: googleBusy } = require("../utils/googleCalendar");
 const router = require("express").Router();
 const Event = require("../models/Event");
-const User = require("../models/User");
-const Reservation = require("../models/Reservation");
-const Payment = require("../models/Payment");
-const { stripe, createPaymentIntent } = require("../utils/stripe");
-const {
-  sendPrivateBookingNotification,
-  sendPrivateBookingReceipt,
-} = require("../utils/email");
-
 // Locations list (5 SF locations near water)
 const LOCATIONS = [
   {
@@ -60,10 +53,10 @@ router.get("/available-locations", async (req, res) => {
     const { date } = req.query;
     if (!date) return res.status(400).json({ error: "Date is required" });
 
-    const dayStart = new Date(date);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(date);
-    dayEnd.setHours(23, 59, 59, 999);
+    const day = DateTime.fromISO(date, { zone: "America/Los_Angeles" }).startOf("day");
+    if (!day.isValid) return res.status(400).json({ error: "Invalid date" });
+    const dayStart = day.toJSDate();
+    const dayEnd = day.endOf("day").toJSDate();
 
     const existingEvents = await Event.find({
       type: "private",
@@ -96,155 +89,22 @@ router.get("/booked-slots", async (req, res) => {
     if (!start || !end)
       return res.status(400).json({ error: "Start and end dates required" });
 
-    const events = await Event.find({
-      type: "private",
-      date: { $gte: new Date(start), $lte: new Date(end) },
-      booked: true,
-    }).select("date duration location");
-
-    res.json(events);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const from = new Date(start), to = new Date(end);
+    if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime()) || to <= from || to - from > 45 * 86400000) return res.status(400).json({ error: "Invalid availability range" });
+    const [external, events] = await Promise.all([
+      googleBusy(from, to),
+      Event.find({ type: "private", booked: true, date: { $lt: to }, $expr: { $gt: [{ $add: ["$date", { $multiply: [{ $ifNull: ["$duration", 120] }, 60000] }] }, from] } }).select("date duration location"),
+    ]);
+    res.set("Cache-Control", "no-store");
+    const locks = await require('../models/BookingSlotLock').find({ date: { $gte: from, $lt: to } });
+    res.json([...events.map(e => e.toObject()), ...external, ...locks.map(lock => ({ date: lock.date, duration: 60 }))]);
+  } catch {
+    res.status(503).json({ error: "Availability temporarily unavailable. Please try again." });
   }
 });
 
-function calcPrice(tentCount, duration) {
-  const base = tentCount === 2 ? 700 : 450;
-  if (duration === 4) return base * 2;
-  if (duration === 3) return Math.round(base * 1.5);
-  return base;
-}
-
-// POST create payment intent for private booking
-router.post("/create-intent", async (req, res) => {
-  try {
-    const { tentCount, duration = 2 } = req.body;
-    const price = calcPrice(tentCount, duration);
-    const paymentIntent = await createPaymentIntent(price);
-    res.json({
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-      price,
-    });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// POST complete private booking (after payment)
-router.post("/book", async (req, res) => {
-  try {
-    const {
-      name,
-      email,
-      phone,
-      tentCount,
-      duration = 2,
-      locationId,
-      customLocation,
-      customLocationName,
-      date,
-      stripePaymentId,
-    } = req.body;
-
-    // Resolve location from preset or custom text
-    let location;
-    if (locationId) {
-      location = LOCATIONS.find((l) => l.id === locationId);
-      if (!location) return res.status(400).json({ error: "Invalid location" });
-    } else if (customLocation) {
-      location = {
-        name: customLocationName || customLocation,
-        address: customLocation,
-        lat: null,
-        lng: null,
-      };
-    } else {
-      return res.status(400).json({ error: "A location is required" });
-    }
-
-    const price = calcPrice(tentCount, duration);
-    const capacity = tentCount === 2 ? 24 : 12;
-    const durationMinutes = duration * 60;
-    const eventDate = new Date(date);
-
-    // Enforce 36-hour advance booking
-    const minAdvanceMs = 36 * 60 * 60 * 1000;
-    if (eventDate.getTime() - Date.now() < minAdvanceMs) {
-      return res
-        .status(400)
-        .json({ error: "Bookings must be made at least 36 hours in advance" });
-    }
-
-    // Check for overlapping events
-    const slotStart = new Date(eventDate);
-    const slotEnd = new Date(eventDate.getTime() + durationMinutes * 60 * 1000);
-    const overlapping = await Event.findOne({
-      type: "private",
-      booked: true,
-      date: { $gte: slotStart, $lt: slotEnd },
-    });
-    if (overlapping)
-      return res
-        .status(400)
-        .json({ error: "This time slot is already booked" });
-
-    // Find or create user
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = new User({ email, name, phone, signedWaiver: true });
-      await user.save();
-    } else {
-      if (name) user.name = name;
-      if (phone) user.phone = phone;
-      user.signedWaiver = true;
-      await user.save();
-    }
-
-    // Create the private event
-    const event = new Event({
-      name: `Private Sauna - ${name}`,
-      date: eventDate,
-      duration: durationMinutes,
-      price,
-      max_capacity: capacity,
-      type: "private",
-      booked: true,
-      tent_count: tentCount,
-      location: {
-        name: location.name,
-        address: location.address,
-        lat: location.lat,
-        lng: location.lng,
-      },
-    });
-    await event.save();
-
-    // Create reservation
-    const reservation = new Reservation({
-      event: event._id,
-      user: user._id,
-    });
-    await reservation.save();
-
-    // Create payment record
-    const payment = new Payment({
-      amount: price,
-      stripe_payment_id: stripePaymentId,
-      reservation: reservation._id,
-    });
-    await payment.save();
-
-    // Send notification to admins
-    await sendPrivateBookingNotification(user, event, location);
-
-    // Send receipt to customer
-    await sendPrivateBookingReceipt(user, event, reservation, location, price);
-
-    res.status(201).json({ event, reservation, user });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
+// Old clients must refresh instead of bypassing request approval.
+router.post('/create-intent', (req, res) => res.status(410).json({ error: 'Refresh the page to use booking requests' }));
+router.post('/book', (req, res) => res.status(410).json({ error: 'Refresh the page to use booking requests' }));
 module.exports = router;
+module.exports.LOCATIONS = LOCATIONS;
