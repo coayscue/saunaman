@@ -14,6 +14,7 @@ publicRouter.post("/", async (req, res) => {
 
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ error: "Event not found" });
+    if (["cancelling", "cancelled"].includes(event.cancellationState)) return res.status(409).json({ error: "Event cancelled" });
     if (event.booked)
       return res.status(400).json({ error: "Event is already booked" });
 
@@ -87,6 +88,7 @@ publicRouter.post("/:id/cancel", async (req, res) => {
       .populate("user");
     if (!reservation)
       return res.status(404).json({ error: "Reservation not found" });
+    if (["cancelling", "cancelled"].includes(reservation.event?.cancellationState)) return res.status(409).json({ error: "Administrator cancellation is processing a full refund" });
     if (reservation.cancelled)
       return res.status(400).json({ error: "Already cancelled" });
 
