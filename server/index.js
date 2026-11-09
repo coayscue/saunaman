@@ -44,16 +44,19 @@ const adminTokens = new Map();
 
 // Admin path verification — issues a token on success
 const ADMIN_PATH = process.env.ADMIN_PATH || "/admin-secret-dashboard-254";
-app.post("/api/admin/verify", (req, res) => {
-  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) return res.status(503).json({ error: 'Configure ADMIN_PASSWORD before enabling administrator access' });
-  if (req.body.path === ADMIN_PATH && process.env.ADMIN_PASSWORD && !req.body.password) return res.json({ valid: false, requiresPassword: true });
-  const valid = req.body.path === ADMIN_PATH && (!process.env.ADMIN_PASSWORD || (typeof req.body.password === 'string' && require('crypto').timingSafeEqual(require('crypto').createHash('sha256').update(req.body.password).digest(), require('crypto').createHash('sha256').update(process.env.ADMIN_PASSWORD).digest())));
-  if (valid) {
-    const token = uuidv4();
-    adminTokens.set(token, Date.now() + 8 * 3600000);
-    return res.json({ valid: true, token });
+const { requiresAdminPassword, verifyAdminPassword } = require("./utils/adminPassword");
+
+app.post("/api/admin/verify", async (req, res) => {
+  const { path, password } = req.body || {};
+  if (path !== ADMIN_PATH) return res.json({ valid: false });
+  if (requiresAdminPassword() && !password) {
+    return res.json({ valid: false, requiresPassword: true });
   }
-  res.json({ valid: false });
+  if (!(await verifyAdminPassword(password))) return res.json({ valid: false });
+
+  const token = uuidv4();
+  adminTokens.set(token, Date.now() + 8 * 3600000);
+  return res.json({ valid: true, token });
 });
 
 // Admin auth middleware
