@@ -1,3 +1,4 @@
+import AvailabilityManager from '../components/AvailabilityManager';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
@@ -254,6 +255,7 @@ function AdminDashboard() {
         {syncMessage && <p role="status">{syncMessage}</p>}
       </section>
       <h1>Admin Dashboard</h1>
+      <AvailabilityManager />
       <section>
         <h2>Booking requests</h2>
         {requestError && <p role="alert">{requestError}</p>}

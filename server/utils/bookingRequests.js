@@ -69,7 +69,7 @@ async function processRequest(id) {
         if (intent.status === 'succeeded') await confirmRecords(request);
         else if (intent.status !== 'requires_capture' || request.deadline <= new Date()) { request.status = 'expiring'; await request.save(); }
         else {
-          if (await localConflict(request)) { request.status = 'denying'; await request.save(); }
+          if (!await require('./availability').isAllowed(request.start,request.end) || await localConflict(request)) { request.status = 'denying'; await request.save(); }
           else {
             try {
               // Persist deterministic event linkage BEFORE creating it, so compensation can recover a crash.
@@ -77,6 +77,7 @@ async function processRequest(id) {
               if (!request.calendarId) request.calendarId = (await require('../models/CalendarConnection').findById('saunaman'))?.calendarId;
               await request.save();
               await calendar.ensureBookingEvent(request);
+              if (!await require('./availability').isAllowed(request.start,request.end)) { const error=new Error('Availability changed');error.conflict=true;throw error; }
               await stripe.paymentIntents.capture(intent.id, {}, { idempotencyKey: `capture-${request._id}` });
               await confirmRecords(request);
             } catch (e) {

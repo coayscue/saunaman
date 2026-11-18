@@ -36,7 +36,26 @@ async function busy(start, end) {
   if (!connection || connection.status !== "connected") throw new Error("Calendar connection unavailable");
   const auth = oauth();
   auth.setCredentials({ refresh_token: decrypt(connection.token) });
-  try { return await query(auth, connection.calendarId, start, end); }
+  try {
+    const {Mirror}=require('../models/Availability');
+    const managed=await Mirror.find({calendarId:connection.calendarId}).select('googleEventId').lean();
+    const managedIds=new Set(managed.map(row=>row.googleEventId));
+    const api=google.calendar({version:'v3',auth});
+    const result=[];
+    let pageToken;
+    do {
+      const {data}=await api.events.list({calendarId:connection.calendarId,timeMin:start.toISOString(),timeMax:end.toISOString(),singleEvents:true,showDeleted:false,maxResults:2500,...(pageToken?{pageToken}:{})});
+      for(const event of data.items||[]) {
+        if(event.transparency==='transparent'||event.status==='cancelled'||managedIds.has(event.id)||managedIds.has(event.recurringEventId))continue;
+        const {DateTime}=require('luxon');
+        const at=part=>part.dateTime?new Date(part.dateTime):DateTime.fromISO(part.date,{zone:'America/Los_Angeles'}).toJSDate();
+        const from=at(event.start),to=at(event.end);
+        if(Number.isFinite(+from)&&to>from)result.push({date:from.toISOString(),duration:(to-from)/60000});
+      }
+      pageToken=data.nextPageToken;
+    } while(pageToken);
+    return result;
+  }
   catch (error) {
     if (error.response?.data?.error === "invalid_grant") await Connection.updateOne({ _id: "saunaman" }, { status: "reconnect_required" });
     throw error;

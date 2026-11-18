@@ -2,12 +2,12 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { validateBooking, lockKeys, verifyIntent, decisionDeadline } = require('../utils/bookingRules');
 function valid() { return { name: 'Test', email: 'test@example.com', phone: '5551234567', waiverAccepted: true, tentCount: 1, duration: 2, date: '2099-01-03T17:00:00-08:00' }; }
-test('booking validates business hours, waiver and server pricing', () => {
+test('booking validates session details, waiver and server pricing', () => {
   const result = validateBooking(valid());
   assert.equal(result.amountCents, 45000);
   assert.equal(+result.end - +result.start, 7200000);
   assert.throws(() => validateBooking({ ...valid(), waiverAccepted: false }));
-  assert.throws(() => validateBooking({ ...valid(), date: '2099-01-03T02:00:00-08:00' }));
+  assert.doesNotThrow(() => validateBooking({ ...valid(), date: '2099-01-03T02:00:00-08:00' }));
   assert.throws(() => validateBooking({ ...valid(), duration: 8 }));
 });
 test('overlapping sessions share unique lock keys; adjacent sessions do not', () => {
@@ -47,6 +47,8 @@ mock('../utils/stripe', { stripe: { paymentIntents: {
   cancel: async id => { cancels++; intents.get(id).status='canceled'; },
 }, refunds: { create: async () => {refunds++;} } } });
 mock('../utils/googleCalendar', { ensureBookingEvent: async r => {r.googleEventId='google';}, removeBookingEvent: async () => {} });
+let allowed=true;
+mock('../utils/availability', {isAllowed:async()=>allowed});
 mock('../utils/bookingRequestEmail', { notify: async r => notices.push(r.status) });
 const { processRequest, acquire } = require('../utils/bookingRequests');
 function setup(id, status='checkout', payment='requires_capture') {
@@ -111,4 +113,11 @@ test('only new opted-in test requests auto-approve through the normal calendar a
     if(saved === undefined) delete process.env.STRIPE_AUTO_APPROVE_TEST_BOOKINGS; else process.env.STRIPE_AUTO_APPROVE_TEST_BOOKINGS=saved;
     if(mode === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV=mode;
   }
+});
+
+test('approval releases authorization when the admin has removed availability', async () => {
+  const r=setup('hours-removed','approving');
+  allowed=false;
+  try {await processRequest(r._id);assert.equal(r.status,'denied');assert.equal(events.has(r._id),false);assert.equal(intents.get(r._id).status,'canceled');}
+  finally {allowed=true;}
 });

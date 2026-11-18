@@ -4,8 +4,6 @@ function validateBooking(body) {
   const start = DateTime.fromISO(date || '', { zone: 'America/Los_Angeles' }).setZone('America/Los_Angeles');
   if (!name?.trim() || name.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '') || email.length > 254 || !phone?.trim() || phone.length > 60 || waiverAccepted !== true) throw new Error('Customer details and accepted waiver are required');
   if (![1, 2].includes(tentCount) || ![2, 3, 4].includes(duration) || !start.isValid || start.toMillis() - Date.now() < 36 * 3600000 || start.minute || start.second || start.millisecond) throw new Error('Invalid session or less than 36 hours notice');
-  const weekend = start.weekday >= 6;
-  if (start.hour < (weekend ? 9 : 17) || start.hour + duration > (weekend ? 20 : 21)) throw new Error('Outside booking hours');
   const base = tentCount === 2 ? 700 : 450;
   return { start: start.toJSDate(), end: start.plus({ hours: duration }).toJSDate(), amountCents: Math.round(base * (duration === 4 ? 2 : duration === 3 ? 1.5 : 1) * 100) };
 }

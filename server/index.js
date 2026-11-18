@@ -69,6 +69,7 @@ function requireAdmin(req, res, next) {
 }
 
 app.use("/api/private-booking-requests", require("./routes/bookingRequests")(requireAdmin));
+app.use("/api/admin/availability", requireAdmin, require("./routes/availability"));
 app.use("/api/google-calendar", require("./routes/googleCalendar")(requireAdmin));
 
 // Public routes (customer-facing)
@@ -159,6 +160,9 @@ mongoose
     console.log("Connected to MongoDB");
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
+    const availabilityMirror = require('./utils/availabilityMirror');
+    availabilityMirror.tick();
+    setInterval(() => availabilityMirror.tick(), 60000);
     const calendarSync = require('./utils/calendarSync').service();
     calendarSync.tick();
     setInterval(() => calendarSync.tick(), 60000);
