@@ -82,6 +82,13 @@ router.get("/available-locations", async (req, res) => {
   }
 });
 
+router.get('/availability',async(req,res)=>{
+  const start=new Date(req.query.start),end=new Date(req.query.end),duration=Number(req.query.duration);
+  if(!Number.isFinite(+start)||!Number.isFinite(+end)||end<=start||end-start>45*86400000||![2,3,4].includes(duration))return res.status(400).json({error:'Invalid availability range or duration'});
+  try {const slots=await require('../utils/availability').availableSlots(start,end,duration);res.set('Cache-Control','no-store');res.json({slots,timeZone:'America/Los_Angeles'});}
+  catch {res.status(503).json({error:'Availability temporarily unavailable. Please refresh to retry.'});}
+});
+
 // GET booked time slots for a date range
 router.get("/booked-slots", async (req, res) => {
   try {

@@ -41,6 +41,7 @@ module.exports = function(requireAdmin) {
     } catch { res.json({ status: "unavailable", error: "Calendar unavailable. Check access or reconnect." }); }
   });
   router.post('/sync', requireAdmin, async (req,res) => {
+    await require('../utils/availabilityMirror').tick();
     await require('../utils/calendarSync').service().tick();
     const connection=await Connection.findById('saunaman');
     res.json({ lastSyncedAt:connection?.syncCheckedAt, error:connection?.syncError });

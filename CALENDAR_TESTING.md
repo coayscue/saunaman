@@ -8,7 +8,7 @@ Unique hourly MongoDB lock documents reserve the entire requested interval. They
 The worker runs every 30 seconds and on startup. Durable states, deterministic event/record IDs and Stripe idempotency keys support crash recovery. Transient provider errors retain the hold and appear in the admin list. A request gets a 24-hour decision window capped before the actual card authorization expiry (a conservative one-hour window if expiry metadata is absent). Checkout holds expire after 15 minutes. Do not manually remove locks to recover a request; inspect payment/calendar state first.
 
 ## Configuration
-Use Node 22.12+. Start MongoDB, then run `npm run dev` from the repository root.
+Use Node 22.12+. Follow [Install and run MongoDB locally](docs/LOCAL_MONGODB.md) for macOS or Windows, then run `npm run dev` from the repository root.
 
 Root `.env` keeps existing keys and needs:
 - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALENDAR_ID
@@ -109,3 +109,11 @@ No new environment variables are needed. The existing Google connection must hav
 Linked bookings support single timed events. Converting one to an all-day or recurring event is flagged for review rather than silently changing the booking. Google-added events are not automatically converted to bookings. Sync is polling rather than push-based, so allow a minute plus provider latency. Edits made outside the app can race with other actions; database revisions and Google If-Match checks protect against silent overwrites but cannot make Google/MongoDB one transaction. Conflict decisions remain administrator actions.
 
 Automated sync tests use fake Google, email and database providers. They cover inbound/outbound updates, conflict choices, overlaps, deletion safeguards, repeat-update suppression, revision/ETag checks, deterministic export, legacy titles, pagination and expired cursors. Live sandbox synchronization and email delivery still require the manual steps above.
+
+
+## Admin booking availability
+On availability-booking, open admin > Booking availability. Existing weekday 5–9 PM/weekend 9 AM–8 PM hours are the initial weekly schedule. Edit or remove weekly rows and Save weekly schedule. Date-specific available windows add hours, while Block time overrides them. Entire day blocks close dates. Windows apply each day in the inclusive date range. Times and recurring days use America/Los_Angeles, with whole-hour start/end boundaries and the existing 36-hour notice requirement.
+
+Save a date-specific available window on a normally closed time, then refresh the public private-booking calendar. The new sessions should appear immediately. Add a full-day block and refresh again: no sessions should remain on that date. Remove the block: sessions should return unless another booking, pending hold or personal Google Busy event overlaps. Change session duration to verify sessions fit inside the window. Save an empty weekly schedule to offer only date-specific windows. Confirmed bookings stay reserved. Pending requests are rechecked before approval and before capture; a request outside the updated availability is denied and its authorization released.
+
+Availability windows are managed from admin and mirrored to the connected Google Calendar in the background (about one minute, or use Sync now). Available windows are Free; blocks are Busy. Google mirror failures are shown in the editor. Website rules are read directly from MongoDB, including when a removed Google block is waiting for cleanup. Other Google Busy events remain authoritative. Manage these special availability windows in admin; direct Google edits to their mirrors do not edit the website schedule.

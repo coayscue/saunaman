@@ -9,6 +9,7 @@ module.exports = requireAdmin => {
     let request;
     try {
       const details = validateBooking(req.body);
+      if (!await require('../utils/availability').isAllowed(details.start,details.end)) return res.status(409).json({error:'This time is outside current availability. Choose another slot.'});
       const { LOCATIONS } = require('./privateBookings');
       const location = req.body.locationId ? LOCATIONS.find(l => l.id === req.body.locationId) : { name: req.body.customLocationName || req.body.customLocation, address: req.body.customLocation };
       if (!location?.name || !location?.address || location.name.length > 300 || location.address.length > 500) return res.status(400).json({ error: 'Valid location required' });
