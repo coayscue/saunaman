@@ -10,7 +10,8 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "setup": "npm ci && npm ci --prefix client",
     "test": "node scripts/test.cjs",
-    "build": "npm run build --prefix client"
+    "build": "npm run build --prefix client",
+    "prebuild": "npm ci --prefix client --no-audit --no-fund"
   },
   "repository": {
     "type": "git",

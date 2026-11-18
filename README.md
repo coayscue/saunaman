@@ -143,7 +143,7 @@ npm test
 npm run build
 ```
 
-`npm test` runs the backend test files using Node's test runner through a portable file-discovery script. Provider interactions in those tests are simulated. `npm run build` verifies the production frontend build. Use `npm run dev` for local feature testing because the production frontend build targets the production API.
+`npm test` runs the backend test files using Node's test runner through a portable file-discovery script. Provider interactions in those tests are simulated. `npm run build` installs the client dependencies from their lockfile through its prebuild step, then verifies the production frontend build. This also supports deployment builders that initially install only root dependencies. Use `npm run dev` for local feature testing because the production frontend build targets the production API.
 
 ## Commands
 

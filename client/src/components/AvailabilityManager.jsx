@@ -17,8 +17,15 @@ function newWindow() {
   const today = DateTime.now().setZone('America/Los_Angeles').toISODate();
   return { kind: 'available', fromDate: today, toDate: today, startMinute: 540, endMinute: 1020 };
 }
+function availabilityError(error, fallback) {
+  if (error.response?.status === 404) return 'The running backend is missing the availability API. Deploy the latest backend, then reload saved availability.';
+  if ([401, 403].includes(error.response?.status)) return 'Your admin session expired. Refresh the page and sign in again.';
+  if (!error.response) return 'Unable to reach the availability server. Check the backend and your connection, then retry.';
+  return error.response.data?.error || fallback;
+}
 export default function AvailabilityManager() {
   const [schedule, setSchedule] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [windows, setWindows] = useState([]);
   const [syncErrors, setSyncErrors] = useState([]);
   const [draft, setDraft] = useState(newWindow);
@@ -28,16 +35,24 @@ export default function AvailabilityManager() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   async function refresh() {
-    const { data } = await api.get('/admin/availability');
-    setSchedule(data.schedule);
-    setWindows(data.rules);
-    setSyncErrors(data.syncErrors);
+    setLoading(true);
+    try {
+      const { data } = await api.get('/admin/availability');
+      if (!data.schedule || !Array.isArray(data.schedule.weekly)) throw new Error('Invalid availability response');
+      setSchedule(data.schedule);
+      setWindows(data.rules);
+      setSyncErrors(data.syncErrors);
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(() => { refresh().catch(() => setError('Unable to load availability. Please refresh.')); }, []);
+  useEffect(() => {
+    refresh().catch(error => setError(availabilityError(error, 'Unable to load availability. Please retry.')));
+  }, []);
   async function perform(action, success) {
     setBusy(true); setError(''); setMessage('');
     try { await action(); await refresh(); setMessage(success); }
-    catch (failure) { setError(failure.response?.data?.error || 'Unable to save availability'); }
+    catch (failure) { setError(availabilityError(failure, 'Unable to save availability')); }
     finally { setBusy(false); }
   }
   function changeWeekly(index, field, value) {
@@ -61,7 +76,7 @@ export default function AvailabilityManager() {
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}
     {syncErrors.length > 0 && <p role="status">{syncErrors[0]}</p>}
-    {!schedule ? <p>Loading schedule…</p> : <>
+    {!schedule ? <p>{loading ? 'Loading schedule…' : 'Schedule could not be loaded. Use Reload saved availability to retry.'}</p> : <>
       <form onSubmit={event => { event.preventDefault(); perform(() => api.put('/admin/availability/weekly', { weekly: schedule.weekly, revision: schedule.revision }), 'Weekly schedule saved.'); }}>
         <h3>Recurring weekly hours</h3>
         <p>Remove a day's hours to close that weekday. Add extra windows below for specific dates.</p>
